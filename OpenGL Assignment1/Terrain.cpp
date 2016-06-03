@@ -3,11 +3,19 @@
 float Terrain::color[3] = { 0.092, 0.184, 0.092 };
 
 
+int Terrain::MAX_X_POS = 0;
+int Terrain::MAX_Z_POS = 0;
+
+int Terrain::X_INCREMENT = 1;
+int Terrain::Z_INCREMENT = 1;
+
+
 void Terrain::InsertPoint(float x, float depth, float z) {
 
 	_vec2 temp;
 	temp.x = x;
 	temp.z = z;
+
 	DepthMap.insert(std::pair<_vec2, float>(temp, depth));
 }
 
@@ -33,32 +41,97 @@ void Terrain::Draw(GLFWwindow * win) {
 void Terrain::GenerateDepthMap() {
 
 	// These points should come from some kind of random source
-	InsertPoint(glm::vec3(1000, 1000, 1000));
-	InsertPoint(glm::vec3(500, 0, 500));
-	InsertPoint(glm::vec3(1500, 0, 1500));
+	int width, height;
 
+	unsigned char* pixels_ = SOIL_load_image("./models/consider_this_question.bmp", &width, &height, 0, SOIL_LOAD_RGB);
+
+	MAX_X_POS = width;
+	MAX_Z_POS = height;
+
+	for (int i = 0; i <= width; i++)
+	{
+		for (int j = 0; j <= height; j++)
+		{
+
+			unsigned char r = pixels_[(i + j * width) * 3 + 0];
+			unsigned char g = pixels_[(i + j * width) * 3 + 1];
+			unsigned char b = pixels_[(i + j * width) * 3 + 2];
+
+			float _r = (float)r / 255;
+			float _g = (float)g / 255;
+			float _b = (float)b / 255;
+
+			InsertPoint(i * X_INCREMENT, HEIGHT_SCALAR*(_r + _g + _b), j * Z_INCREMENT);
+
+		}
+	}
+
+	SOIL_free_image_data(pixels_);
 }
 
 void Terrain::LoadVertices() {
-	// This should push back the points from the depth map into the vertices IN THE PROPER ORDER for openGL to make triangles/or other shape we define in draw
-	// GL_POLYGON might be the easiest?
+	int x = 0;
+	int z = 0;
 
-	// Probably also need a tangent map at each point, to get smooth interpolated results >.<
+	for (int j = 0; j < MAX_Z_POS; j++) {
 
-	// It seems easier to pre-define certain shapes that we can "apply" to a plane surface to deform it based on some algorithm
+		x = 0;
+		for (int i = 0; i < MAX_X_POS; i ++) {
 
-	// Need to research procedural generation / voxels / surface splines !
+			_vec2 pos1;
+			float depth1;
+			pos1.x = x;
+			pos1.z = z;
 
-	// TO REMOVE:
-	vertices.push_back(glm::vec3(1000, 1000, 1000));
-	vertices.push_back(glm::vec3(500, 0, 500));
-	vertices.push_back(glm::vec3(1500, 0, 1500));
+			depth1 = DepthMap.find(pos1)->second;
+
+			vertices.push_back(glm::vec3(pos1.x, depth1, pos1.z));
+
+
+			_vec2 pos2;
+			float depth2;
+			pos2.x = x;
+			pos2.z = z + Z_INCREMENT;
+
+			depth2 = DepthMap.find(pos2)->second;
+
+			vertices.push_back(glm::vec3(pos2.x, depth2, pos2.z));
+
+
+			_vec2 pos3;
+			float depth3;
+			pos3.x = x + X_INCREMENT;
+			pos3.z = z;
+
+			depth3 = DepthMap.find(pos3)->second;
+
+			vertices.push_back(glm::vec3(pos3.x, depth3, pos3.z));
+
+
+			_vec2 pos4;
+			float depth4;
+			pos4.x = x + X_INCREMENT;
+			pos4.z = z + Z_INCREMENT;
+
+			depth4 = DepthMap.find(pos4)->second;
+
+
+			vertices.push_back(glm::vec3(pos2.x, depth2, pos2.z));
+			vertices.push_back(glm::vec3(pos3.x, depth3, pos3.z));
+			vertices.push_back(glm::vec3(pos4.x, depth4, pos4.z));
+
+
+			x += X_INCREMENT;
+		}
+
+		z += Z_INCREMENT;
+	}
 }
 
 
 void Terrain::SetupTerrain() {
 
-	//srand(time(NULL));
+	srand(time(NULL));
 
 	GenerateDepthMap();
 	LoadVertices();
