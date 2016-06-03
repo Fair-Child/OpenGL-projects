@@ -3,6 +3,8 @@ COMP 371 - Computer Graphics Project
 
 ![promisechains](https://cloud.githubusercontent.com/assets/16614194/15484215/eb923812-2106-11e6-87a9-563306bf27c4.png)
 
+![promisechains](https://cloud.githubusercontent.com/assets/16614194/15765796/c1ac73e8-2906-11e6-8dc4-ac6d9c6b3d50.png)
+
 Features:
 
   Free-moving 3rd person camera of spaceship,
