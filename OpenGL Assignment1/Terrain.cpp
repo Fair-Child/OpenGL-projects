@@ -1,5 +1,7 @@
 ﻿#include "all_headers.h"
 
+using namespace glm;
+
 int Terrain::MAX_X_POS = 0;
 int Terrain::MAX_Z_POS = 0;
 
@@ -168,25 +170,6 @@ void Terrain::LoadVertices() {
 			v3 = &(DepthMap.find(pos3)->second);
 			glm::vec3 p3 = v3->Position;
 
-			// Normals
-			glm::vec3 u = p1 - p2;
-			glm::vec3 v = p1 - p3;
-			glm::vec3 normal = glm::cross(u, v);
-			normal = glm::normalize(normal);
-
-			v1->Normal = normal;
-			v1->TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
-			vertices.push_back(*v1);
-
-			v2->Normal = normal;
-			v2->TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
-			vertices.push_back(*v2);
-
-			v3->Normal = normal;
-			v3->TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
-			vertices.push_back(*v3);
-
-
 			_vec2 pos4;
 			Vertex * v4;
 			pos4.x = (x + 1) * X_SCALAR + X_TRANSLATE;
@@ -195,24 +178,136 @@ void Terrain::LoadVertices() {
 			v4 = &(DepthMap.find(pos4)->second);
 			glm::vec3 p4 = v4->Position;
 
-			// Normals
-			u = p2 - p4;
-			v = p2 - p3;
-			normal = glm::cross(u, v);
-			normal = glm::normalize(normal);
+			float yDistP1P2 = glm::abs(p2.y - p1.y);
+			float yDistP4P2 = glm::abs(p2.y - p4.y);
 
-			vertices.push_back(*v3);
-			vertices.push_back(*v2);
+			float yDistP1P3 = glm::abs(p3.y - p1.y);
+			float yDistP4P3 = glm::abs(p3.y - p4.y);
 
-			v4->Normal = normal;
-			v4->TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
-			vertices.push_back(*v4);
+			float maxHorizontalYDist = glm::max(yDistP1P3, yDistP4P2);
+			float maxVerticalYDist = glm::max(yDistP1P2, yDistP4P3);
 
-			float angle = glm::dot(normal, glm::vec3(1, 0, 0));
-			if (angle < 0.10) {
+			if (maxHorizontalYDist <= HEIGHT_SCALAR && maxVerticalYDist <= HEIGHT_SCALAR) {
+				// Normals for v1, v2, v3
+				glm::vec3 u = p1 - p2;
+				glm::vec3 v = p1 - p3;
+				glm::vec3 normal = glm::cross(u, v);
+				normal = glm::normalize(normal);
+
+				v1->Normal = normal;
+				v1->TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
+				vertices.push_back(*v1);
+
+				v2->Normal = normal;
+				v2->TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
+				vertices.push_back(*v2);
+
+				v3->Normal = normal;
+				v3->TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
+				vertices.push_back(*v3);
+
+				// Normals for v3, v2, v4
+				u = p2 - p4;
+				v = p2 - p3;
+				normal = glm::cross(u, v);
+				normal = glm::normalize(normal);
+
+				vertices.push_back(*v3);
+				vertices.push_back(*v2);
+
+				v4->Normal = normal;
+				v4->TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
+				vertices.push_back(*v4);
+
+				float angle = glm::dot(normal, glm::vec3(1, 0, 0));
+				if (angle < 0.10) {
+					SpawnMap.insert(std::pair<_vec2, bool>(pos4, false));
+				}
+			}
+			else {
+				int numOfHorizontalTriangle = glm::ceil(maxHorizontalYDist / HEIGHT_SCALAR);
+				numOfHorizontalTriangle = glm::max(numOfHorizontalTriangle, 1);
+
+				int numOfVerticalTriangle = glm::ceil(maxVerticalYDist / HEIGHT_SCALAR);
+				numOfVerticalTriangle = glm::max(numOfVerticalTriangle, 1);
+
+				std::vector<vec3> leftPos;
+				std::vector<vec3> topPos;
+				std::vector<vec3> rightPos;
+				std::vector<vec3> bottomPos;
+				for (int i = 0; i <= numOfVerticalTriangle; ++i) {
+					vec3 newLeftPos = p1 + (p2 - p1) * ((float)i / numOfVerticalTriangle);
+					leftPos.push_back(newLeftPos);
+
+					vec3 newRightPos = p3 + (p4 - p3) * ((float)i / numOfVerticalTriangle);
+					rightPos.push_back(newRightPos);
+				}
+
+				for (int i = 0; i <= numOfHorizontalTriangle; ++i) {
+					vec3 newTopPos = p1 + (p3 - p1) * ((float)i / numOfHorizontalTriangle);
+					topPos.push_back(newTopPos);
+
+					vec3 newBottomPos = p2 + (p4 - p2) * ((float)i / numOfHorizontalTriangle);
+					bottomPos.push_back(newBottomPos);
+				}
+
+				glm::vec3 normal = vec3(0.0f, 1.0f, 0.0f);
+
+				for (int i = 0; i < numOfVerticalTriangle; ++i) {
+					for (int j = 0; j < numOfHorizontalTriangle; ++j) {
+						vec3 newPoint1 = leftPos[i] + (rightPos[i] - leftPos[i]) * ((float)j / numOfHorizontalTriangle);
+						vec3 newPoint2 = leftPos[i + 1] + (rightPos[i + 1] - leftPos[i + 1]) * ((float)j / numOfHorizontalTriangle);
+						vec3 newPoint3 = topPos[j + 1] + (bottomPos[j + 1] - topPos[j + 1]) * ((float)i / numOfVerticalTriangle);
+						vec3 newPoint4 = topPos[j + 1] + (bottomPos[j + 1] - topPos[j + 1]) * ((float)(i + 1) / numOfVerticalTriangle);
+						
+						Vertex * newV1 = new Vertex;
+						newV1->Position = newPoint1;
+						Vertex * newV2 = new Vertex;
+						newV2->Position = newPoint2;
+						Vertex * newV3 = new Vertex;
+						newV3->Position = newPoint3;
+						Vertex * newV4 = new Vertex;
+						newV4->Position = newPoint4;
+
+						// normal for v1, v2, v3
+						glm::vec3 u = newPoint1 - newPoint2;
+						glm::vec3 v = newPoint1 - newPoint3;
+						normal = glm::cross(u, v);
+						normal = glm::normalize(normal);
+
+						newV1->Normal = normal;
+						newV1->TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
+
+						newV2->Normal = normal;
+						newV2->TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
+
+						newV3->Normal = normal;
+						newV3->TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
+
+						// Normals for v3, v2, v4
+						u = newPoint2 - newPoint4;
+						v = newPoint2 - newPoint3;
+						normal = glm::cross(u, v);
+						normal = glm::normalize(normal);
+
+						newV4->Normal = normal;
+						newV4->TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
+
+						vertices.push_back(*newV1);
+						vertices.push_back(*newV2);
+						vertices.push_back(*newV3);
+
+						vertices.push_back(*newV3);
+						vertices.push_back(*newV2);
+						vertices.push_back(*newV4);
+					}
+				}
+
+				float angle = glm::dot(normal, glm::vec3(1, 0, 0));
+				if (angle < 0.10) {
 				SpawnMap.insert(std::pair<_vec2, bool>(pos4, false));
-			}			
-
+				}
+			}					
 			x++;
 		}
 

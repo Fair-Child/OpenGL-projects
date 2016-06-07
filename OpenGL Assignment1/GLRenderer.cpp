@@ -50,6 +50,7 @@ void GLRenderer::PrepareScene()
 
 	m_pProgram->Use();
 
+	speed = 1000;
 	SetData();
 }
 
