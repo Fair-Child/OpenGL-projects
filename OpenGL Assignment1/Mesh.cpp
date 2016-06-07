@@ -69,6 +69,7 @@ void Mesh::SetupMesh() {
 		if (vertices[k].Position.z < min.z) min.z = vertices[k].Position.z;
 	}
 	centroid = 0.5f * (max + min);
+
 	radius = sqrt(pow(max.x, 2) + pow(max.y, 2) + pow(max.z, 2));
 
 	centroid.w = 1.0f;
@@ -98,88 +99,3 @@ void Mesh::SetupMesh() {
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),(GLvoid*)offsetof(Vertex, TexCoords));
 }
-
-/* Artifact from assignment 1, left for future refence if needed
-void Mesh::Spin(GLFWwindow * win) {
-
-	if (!centered) {
-		ModelMat = glm::translate(ModelMat, centroid.xyz());
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		ModelMat = glm::scale(ModelMat, glm::vec3(1 + change_value, 1 + change_value, 1 + change_value));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-		ModelMat = glm::scale(ModelMat, glm::vec3(1 - change_value, 1 - change_value, 1 - change_value));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, -change_value, glm::vec3(0, 1, 0));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, change_value, glm::vec3(0, 1, 0));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_UP) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, change_value, glm::vec3(1, 0, 0));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, -change_value, glm::vec3(1, 0, 0));
-	}
-
-	ModelMat = glm::rotate(ModelMat, change_value, glm::vec3(0, 0, 1));
-
-	if (!centered) {
-		ModelMat = glm::translate(ModelMat, -1.0f * centroid.xyz());
-	}
-}
-
-void Mesh::Revolve(GLFWwindow * win) {
-
-	if (!centered) {
-		ModelMat = glm::translate(ModelMat, centroid.xyz());
-	}
-
-	ModelMat = glm::translate(ModelMat, glm::vec3(-5.0f* cos(vertical_angle), -5.0f * sin(vertical_angle), 0.0f));	
-
-	if (glfwGetKey(win, GLFW_KEY_R) == GLFW_PRESS && glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		ModelMat = glm::scale(ModelMat, glm::vec3(1 + change_value, 1 + change_value, 1 + change_value));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_R) == GLFW_PRESS && glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-		ModelMat = glm::scale(ModelMat, glm::vec3(1 - change_value, 1 - change_value, 1 - change_value));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, -change_value, glm::vec3(0, 0, 1));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, change_value, glm::vec3(0, 0, 1));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_UP) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, change_value, glm::vec3(1, 0, 0));
-	}
-
-	if (glfwGetKey(win, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		ModelMat = glm::rotate(ModelMat, -change_value, glm::vec3(1, 0, 0));
-	}
-
-	ModelMat = glm::rotate(ModelMat, change_value, glm::vec3(0.0f, 0.0f, 1.0f));
-	
-	ModelMat = glm::translate(ModelMat, glm::vec3(5.0f * cos(vertical_angle), 5.0f * sin(vertical_angle), 0.0f));
-
-
-	vertical_angle += change_value;
-
-	ModelMat = glm::rotate(ModelMat, -change_value, glm::vec3(0.0f, 0.0f, 1.0f));
-
-	if (!centered) {
-		ModelMat = glm::translate(ModelMat, -1.0f * centroid.xyz());
-	}
-}
-*/

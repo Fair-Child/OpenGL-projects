@@ -98,6 +98,7 @@
     <ClInclude Include="GLWindow.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="my_structs.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Terrain.h" />
   </ItemGroup>
@@ -112,10 +113,8 @@
     <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\OpenGL Assignment1\OpenGL Assignment1\terrain.frag" />
-    <None Include="..\..\OpenGL Assignment1\OpenGL Assignment1\terrain.vert" />
-    <None Include="minimal.frag" />
-    <None Include="minimal.vert" />
+    <None Include="lit.frag" />
+    <None Include="lit.vert" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenGL Assignment1.rc" />

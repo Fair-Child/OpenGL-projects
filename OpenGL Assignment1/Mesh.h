@@ -1,17 +1,5 @@
 #include "all_headers.h"
 
-struct Vertex {
-	glm::vec3 Position;
-	glm::vec3 Normal;		// Faces
-	glm::vec2 TexCoords;	// Texture coords, also known as UVs
-};
-
-struct Texture {
-	GLuint id;
-	std::string type;
-	aiString path;
-};
-
 // Child of Model, holds the vertices, textures, buffers, etc...
 // Sets itself up at construction
 // Draws itself
@@ -20,7 +8,7 @@ class Mesh {
 	friend class Model;
 
 public:
-	Mesh(std::vector<Vertex> _vertices, std::vector<GLuint> _indices, std::vector<Texture> _textures, Model* _parent, bool _centered = true);
+	Mesh(std::vector<Vertex> _vertices, std::vector<GLuint> _indices, std::vector<Texture> _textures, Model* _parent, bool _centered = false);
 	Mesh(Mesh * copy_this, int a);
 
 protected:
@@ -41,7 +29,7 @@ protected:
 
 	glm::mat4 ModelMat;					// Model matrix
 
-	bool centered = true;				// Whether mesh's orgin is at its centeroid or not
+	bool centered = false;				// Whether mesh's orgin is at its centeroid or not
 	glm::vec4 centroid;					// Average center of Mesh
 	glm::vec4 max;
 	glm::vec4 min;

@@ -7,7 +7,7 @@ class Model
 	friend class GLRenderer;
 
 public:
-	Model(GLchar* path, std::string _name = "unspecified", bool _centered = true);
+	Model(GLchar* path, std::string _name = "unspecified", bool _centered = false);
 	Model(Model* copy_this);
 	Model();
 
@@ -16,7 +16,7 @@ protected:
 	static int unique_ID;
 	std::string name;
 
-	bool centered = true;
+	bool centered = false;
 	glm::vec3 scale;
 
 	void Draw(GLFWwindow* win);

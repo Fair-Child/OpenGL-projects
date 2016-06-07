@@ -45,6 +45,9 @@
     <ClInclude Include="Terrain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="my_structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -73,16 +76,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="minimal.vert">
+    <None Include="lit.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="minimal.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\..\OpenGL Assignment1\OpenGL Assignment1\terrain.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\..\OpenGL Assignment1\OpenGL Assignment1\terrain.vert">
+    <None Include="lit.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

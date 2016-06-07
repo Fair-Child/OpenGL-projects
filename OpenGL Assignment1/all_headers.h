@@ -22,6 +22,7 @@
 #include <future>
 #include <map>
 #include <time.h>
+#include <math.h>
 
 //--- assimp
 #include <assimp/Importer.hpp>      // C++ importer interface
@@ -43,6 +44,7 @@
 #include <gtx/spline.hpp>
 
 //--- My Classes
+#include "my_structs.h"
 #include "Terrain.h"
 #include "Mesh.h"
 #include "Model.h"

@@ -1,48 +1,44 @@
 #include "all_headers.h"
 
-#define HEIGHT_SCALAR 1000
+#define X_TRANSLATE -13000
+#define Z_TRANSLATE -13000
+#define NUM_OF_TEXTURES 3
+#define NUM_OF_LINES 10
 
-struct _vec2 {
-	float x;
-	float z;
 
-	bool operator<(const _vec2& v) const {
-
-		if (x < v.x)
-			return true;
-		if (v.x < x)
-			return false;
-		if (z < v.z)
-			return true;
-		if (v.z < z)
-			return false;
-		return false;
-	}
-};
-
-// TODO: Nothing really implemented yet.. only draws a triangle atm.
+/* TODO:
+		Procedural generation of terrain
+*/
 
 class Terrain {
 	friend class GLRenderer;
 
 protected:
-	std::multimap<_vec2, float> DepthMap;
-	std::vector<glm::vec3> vertices;
 
-	void InsertPoint(float x, float z, float depth);
-	void InsertPoint(glm::vec3 vertex);
+	std::map<_vec2, Vertex> DepthMap;
+	std::map<_vec2, bool> SpawnMap;
+
+	std::vector<Vertex> vertices;
+	GLuint terrain_texture;
+
+	void InsertPoint(Vertex v);
+
 	void Draw(GLFWwindow * win);
 
-	static int MAX_X_POS;
-	static int X_INCREMENT;
+	bool CheckNothingNearby(_vec2 pos);		// Checks for spawned models near given position
 
+	static int MAX_X_POS;
 	static int MAX_Z_POS;
-	static int Z_INCREMENT;
+
+	static int HEIGHT_SCALAR;
+	static int X_SCALAR;
+	static int Z_SCALAR;
 
 private:
 	void SetupTerrain();
 	void GenerateDepthMap();
+	void ModifyTerrain();
 	void LoadVertices();
-	static float color[3];
-	GLuint VAO, VBO[2];
+
+	GLuint VAO, VBO;
 };

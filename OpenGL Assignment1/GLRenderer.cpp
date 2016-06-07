@@ -27,8 +27,8 @@ void GLRenderer::PrepareScene()
 
 	int status = 0;
 
-	status += (int) m_pVertSh->Load("minimal.vert");
-	status += (int) m_pFragSh->Load("minimal.frag");
+	status += (int) m_pVertSh->Load("lit.vert");
+	status += (int) m_pFragSh->Load("lit.frag");
 
 	status += (int) m_pVertSh->Compile();
 	status += (int) m_pFragSh->Compile();
@@ -48,130 +48,193 @@ void GLRenderer::PrepareScene()
 		std::cout << "Error during loading/compiling/linking of shaders!!\n";
 	}
 
-	/*^^^^^^^^^^^^^^^^^^ Repeat above for terrain shaders ^^^^^^^^^^^^^^^*/
-	// Terrain shaders
-	m_pProgram_terrain = new GLProgram();
-	m_pVertSh_terrain = new GLShader(GL_VERTEX_SHADER);
-	m_pFragSh_terrain = new GLShader(GL_FRAGMENT_SHADER);
-
-	status = 0;
-
-	status += (int)m_pVertSh_terrain->Load("terrain.vert");
-	status += (int)m_pFragSh_terrain->Load("terrain.frag");
-
-	status += (int)m_pVertSh_terrain->Compile();
-	status += (int)m_pFragSh_terrain->Compile();
-
-	m_pProgram_terrain->AttachShader(m_pVertSh_terrain);
-	m_pProgram_terrain->AttachShader(m_pFragSh_terrain);
-
-	status += (int)m_pProgram_terrain->Link();
-
-	// Get a handle for the "MVP" uniform
-	MatrixID_terrain = glGetUniformLocation(m_pProgram_terrain->GetID(), "MVP");
-
-	if (status != 5) {
-		std::cout << "Error during loading/compiling/linking of shaders!!\n";
-	}
+	m_pProgram->Use();
 
 	SetData();
 }
 
 
-// Used to properly spawn models in the world
-// Model constructor creates and setups the meshes & textures
-void GLRenderer::AddModelFromSaved(GLchar* path, std::string name, bool centered) {
-	int index = -1;
-	bool data_found = false;
-	bool can_copy = false;
+void GLRenderer::PrepareLights() {
+
+	/*		  type_light_index		*/
+	LightInfo point_light_0;
+
+	point_light_0.Type = 0; //Point
+	point_light_0.LightPosition_worldspace = glm::vec3(2000, 2000, 2000);
+	point_light_0.LightColor = glm::vec3(1, 0, 0);
+	point_light_0.LightPower = 1000000.0f;
+
+	point_light_0.Type_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[0].Type");
+	glUniform1i(point_light_0.Type_ID, point_light_0.Type);
+
+	point_light_0.LightPosition_worldspace_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[0].LightPosition_worldspace");
+	glUniform3fv(point_light_0.LightPosition_worldspace_ID, 1, &point_light_0.LightPosition_worldspace[0]);
+
+	point_light_0.LightColor_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[0].LightColor");
+	glUniform3fv(point_light_0.LightColor_ID, 1, &point_light_0.LightColor[0]);
+
+	point_light_0.LightPower_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[0].LightPower");
+	glUniform1f(point_light_0.LightPower_ID, point_light_0.LightPower);
+
+
+
+	LightInfo point_light_1;
+
+	point_light_1.Type = 0; //Point
+	point_light_1.LightPosition_worldspace = glm::vec3(1000, 2000, 1000);
+	point_light_1.LightColor = glm::vec3(1, 0, 0);
+	point_light_1.LightPower = 1000000.0f;
+
+	point_light_1.Type_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[1].Type");
+	glUniform1i(point_light_1.Type_ID, point_light_1.Type);
+
+	point_light_1.LightPosition_worldspace_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[1].LightPosition_worldspace");
+	glUniform3fv(point_light_1.LightPosition_worldspace_ID, 1, &point_light_1.LightPosition_worldspace[0]);
+
+	point_light_1.LightColor_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[1].LightColor");
+	glUniform3fv(point_light_1.LightColor_ID, 1, &point_light_1.LightColor[0]);
+
+	point_light_1.LightPower_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[1].LightPower");
+	glUniform1f(point_light_1.LightPower_ID, point_light_1.LightPower);
+
+
+
+	LightInfo spot_light_2;
+
+	spot_light_2.Type = 1; // Spot light
+	spot_light_2.LightPosition_worldspace = position;
+	spot_light_2.LightPosition_worldspace.y;
+	spot_light_2.SpotLightDirection_worldspace = direction;
+	spot_light_2.LightColor = glm::vec3(0.355f, 0.247f, 0.141f);
+	spot_light_2.LightPower = 50000.0f;
+	spot_light_2.CutOff = cos(glm::radians(12.5f));
+	spot_light_2.OuterCutOff = cos(glm::radians(15.0f));
+	spot_light_2.dynamic = true;
+
+	spot_light_2.Type_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].Type");
+	glUniform1i(spot_light_2.Type_ID, spot_light_2.Type);
+
+	spot_light_2.LightPosition_worldspace_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].LightPosition_worldspace");
+	glUniform3fv(spot_light_2.LightPosition_worldspace_ID, 1, &spot_light_2.LightPosition_worldspace[0]);
+
+	spot_light_2.SpotLightDirection_worldspace_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].SpotLightDirection_worldspace");
+	glUniform3fv(spot_light_2.SpotLightDirection_worldspace_ID, 1, &spot_light_2.SpotLightDirection_worldspace[0]);
+
+	spot_light_2.LightColor_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].LightColor");
+	glUniform3fv(spot_light_2.LightColor_ID, 1, &spot_light_2.LightColor[0]);
+
+	spot_light_2.LightPower_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].LightPower");
+	glUniform1f(spot_light_2.LightPower_ID, spot_light_2.LightPower);
+
+	spot_light_2.CutOff_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].CutOff");
+	glUniform1f(spot_light_2.CutOff_ID, spot_light_2.CutOff);
+
+	spot_light_2.OuterCutOff_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].OuterCutOff");
+	glUniform1f(spot_light_2.OuterCutOff_ID, spot_light_2.OuterCutOff);
+
+
+	m_Lights.push_back(point_light_0);
+	m_Lights.push_back(point_light_1);
+	m_Lights.push_back(spot_light_2);
+}
+
+
+void GLRenderer::LoadBankModels() {
+
+	ReadModelMatrices();
+
+	bool already_loaded = false;
 
 	for (int i = 0; i < model_data.size(); i++) {
-		if (model_data[i].name == name) {
 
-			if (model_data[i].instanced == false) {
-				index = i;
-				data_found = true;
-				break;
-			}
-			else {
-				can_copy = true;
+		already_loaded = false;
+
+		for (int j = 0; j < m_ModelsBank.size(); j++) {
+
+			if (m_ModelsBank[j]->name == model_data[i].name) {
+				already_loaded = true;
 			}
 		}
-	}
 
-	if (can_copy) {
+		if (!already_loaded) {
 
-		for (int j = 0; j < m_Models.size(); j++) {
-			if (m_Models[j]->name == name) {
-				CopyModel(m_Models[j]);
-				break;
-			}
+			m_ModelsBank.push_back(new Model(&model_data[i].path[0], model_data[i].name, model_data[i].centered));
+
+			// Hacky, does not support rotations
+			m_ModelsBank.back()->scale = glm::vec3(model_data[i].transformation[0].x, model_data[i].transformation[1].y, model_data[i].transformation[2].z);
+
 		}
+
 	}
-	else {
-		m_Models.push_back(new Model(path, name, centered));
-	}
+}
 
-	if (data_found) {
-		model_data[index].instanced = true;
+void GLRenderer::RenderModel(std::string name, bool transform) {
 
-		m_Models.back()->Transform(model_data[index].transformation);
-		m_Models.back()->centered = model_data[index].centered;
+	for (int i = 0; i < m_ModelsBank.size(); i++) {
+		if (name == m_ModelsBank[i]->name) {
+			CopyModel(m_ModelsBank[i]);
 
-		// Hacky, only needed for ground, won't be needed with terrain
-		m_Models.back()->scale = glm::vec3(model_data[index].transformation[0].x, model_data[index].transformation[1].y, model_data[index].transformation[2].z);
+			if (transform) {
+				m_Models.back()->Transform(m_ModelsBank[i]->meshes[0].ModelMat);
+			}
+			return;
+		}
 	}
 
 }
 
+void GLRenderer::ScatterModels() {
 
+	int NUM_OF_MODELS = m_Terrain.DepthMap.size() / 100;
+	int copied_model_index = 0;
+	_vec2 pos;
+
+	srand(time(NULL));
+
+	for (int i = 0; i < NUM_OF_MODELS; i++) {
+
+		copied_model_index = rand() % m_ModelsBank.size();
+		auto it = m_Terrain.SpawnMap.begin();
+
+		do {		
+			it = m_Terrain.SpawnMap.begin();
+			std::advance(it, rand() % m_Terrain.SpawnMap.size());
+			pos = it->first;
+			
+		} while (!m_Terrain.CheckNothingNearby(it->first));
+
+		it->second = true;
+		CopyModel(m_ModelsBank[copied_model_index]);
+
+		glm::vec3 position = m_Terrain.DepthMap.find(pos)->second.Position;		
+
+		m_Models.back()->Center();
+		m_Models.back()->Translate(position);
+		m_Models.back()->Scale(m_Models.back()->scale);
+
+	}
+
+}
 
 // Fills the ModelData array and loads all the models defined in "Object Matrices.txt"
 // Add custom models here, or in the above file
 void GLRenderer::SetData()
 {
-	ReadModelMatrices();
+	PrepareLights();
+
+	LoadBankModels();
 
 	m_Terrain.SetupTerrain(); // Prepare Terrain
+
+	m_Models.push_back(new Model("./models/skybox/skybox.obj", "sky"));
+	skybox = m_Models.back();	
+	skybox->Scale(glm::vec3(600, 150, 600)); 	skybox->scale = glm::vec3(600, 150, 600);
+	skybox->Translate(glm::vec3(0, 10, 0));
 
 	m_Models.push_back(new Model("./models/flyertug/FlyerTug(obj).obj", "first_person"));	// First person model
 	m_Models.back()->scale = glm::vec3(0.35, 0.35, 0.35);
 	
-	for (int i = 0; i < model_data.size(); i++) {
-		AddModelFromSaved(&model_data[i].path[0], model_data[i].name, model_data[i].centered);
-	}
-	/*
-	AddModelFromSaved("./models/dice/D6.obj", "ground");	// Ground box
-
-	AddModelFromSaved("./models/words/boing.obj", "boing");
-	AddModelFromSaved("./models/teapot.obj", "center");
-	AddModelFromSaved("./models/Tree/Tree.obj", "tree");
-	AddModelFromSaved("./models/truck/truck.obj", "truck");
-
-	AddModelFromSaved("./models/dice/D6.obj", "dice");
-	AddModelFromSaved("./models/garbage/Garbage_Bin.obj", "garbage");
-	AddModelFromSaved("./models/horse/horse-obj.obj", "horse");
-	AddModelFromSaved("./models/nanosuit/nanosuit.obj", "nanosuit");
-	AddModelFromSaved("./models/Tree/Tree.obj", "tree");
-
-	AddModelFromSaved("./models/abandoned1/abandoned1.obj", "abandoned1");
-	AddModelFromSaved("./models/building3/building3.obj", "building3");
-	AddModelFromSaved("./models/building2/building2.obj", "building2");
-	AddModelFromSaved("./models/building6/building6.obj", "building6");
-	AddModelFromSaved("./models/building10/building10.obj", "building10");
-	AddModelFromSaved("./models/building11/building11.obj", "building11");
-	AddModelFromSaved("./models/skyscraper4/skyscraper4.obj", "skyscraper4");
-	AddModelFromSaved("./models/destroyed_house1/old_house1.obj", "destroyed_house1");
-
-	AddModelFromSaved("./models/Dobby/Dobby.obj", "Dobby");
-	AddModelFromSaved("./models/road1/road1.obj", "road1");
-	AddModelFromSaved("./models/road3/road3.obj", "road3");
-	AddModelFromSaved("./models/street_cones1/street_cones1.obj", "street_cones1");*/
-
-	// Big i.e. slow ones:
-	//m_Models.push_back(new Model("./models/Fantasy Colony/Fantasy Colony.obj"));
-	//m_Models.push_back(new Model("./models/habitat/Habitat.obj"));
-	//m_Models.push_back(new Model("./models/miami/Miami 2525.obj"));
+	ScatterModels();
 }
 
 
@@ -192,15 +255,18 @@ void GLRenderer::DrawScene()
 	HandleModelManipulation();
 
 	// Draw Terrain
-	m_pProgram_terrain->Use();
+	glUniformMatrix4fv(M_MatrixID, 1, GL_FALSE, &glm::mat4()[0][0]);
+	glUniformMatrix4fv(V_MatrixID, 1, GL_FALSE, &View[0][0]);
 	MVP = Projection * View;
 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	m_Terrain.Draw(win);
 
 	// Draw Models
-	m_pProgram->Use();
-
 	for (int i = 0; i < m_Models.size(); i++) {
+
+		if (m_Models[i]->name == "sky") {
+			glDisable(GL_CULL_FACE);
+		}
 
 		for (int j = 0; j < m_Models[i]->meshes.size(); j++) {
 
@@ -212,6 +278,10 @@ void GLRenderer::DrawScene()
 			glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 			m_Models[i]->meshes[j].Draw(win);
 		}
+
+		if (m_Models[i]->name == "sky") {
+			glEnable(GL_CULL_FACE);
+		}
 	}
 
 	// Swap buffers
@@ -222,21 +292,26 @@ void GLRenderer::DrawScene()
 
 
 // Basic bounding-box detection
-// TODO: Based on depth map of terrain
 void GLRenderer::GroundDetection() {
-	glm::vec3 currPosition = position + 50.0f * direction;
-	currPosition = currPosition + 50.0f * - up;
+	glm::vec3 currPosition = position + 25.0f * direction;
+	currPosition = currPosition + 20.0f * - up;
 
-	for (int j = 0; j < m_Models.size(); j++) {
-		if (glfwWindowShouldClose(win)) { return; }
-		if (m_Models[j]->name == "ground") {
-			float ground_plane = m_Models[j]->meshes[0].ModelMat[3].y + m_Models[j]->scale.y * m_Models[j]->meshes[0].max.y; // Hacky.. won't be needed when we have terrain. (only used for ground)
-			if (currPosition.y <= ground_plane) {
-				position.y += speed / 5;
-			}
+	_vec2 pos;
+
+	pos.x = std::floor(currPosition.x / m_Terrain.X_SCALAR) * m_Terrain.X_SCALAR;
+	pos.z = std::floor(currPosition.z / m_Terrain.Z_SCALAR) * m_Terrain.Z_SCALAR;
+
+	float terrain_depth = 0;
+
+	if (m_Terrain.DepthMap.count(pos) >= 1) {
+		terrain_depth = m_Terrain.DepthMap.find(pos)->second.Position.y;
+
+		if (currPosition.y < terrain_depth || glm::distance(terrain_depth, currPosition.y) < 10) {
+			position.y += speed / 5;
 			return;
 		}
 	}
+
 	return;
 }
 
@@ -251,12 +326,15 @@ void GLRenderer::RayTracing() {
 	for (int j = 0; j < m_Models.size(); j++) {
 		if (glfwWindowShouldClose(win)) { return; }
 		if (m_Models[j]->name == "first_person") continue;
-		if (m_Models[j]->name == "ground") continue;
+		if (m_Models[j]->name == "sky") continue;
 
 		for (int k = 0; k < m_Models[j]->meshes.size(); k++) {
 			Mesh * mesh = &m_Models[j]->meshes[k];
 
 			glm::vec3 mesh_pos(mesh->ModelMat * mesh->centroid);
+
+			if (glm::distance(position, mesh_pos) > 2000) continue;
+
 			glm::vec3 max(mesh->ModelMat * mesh->max);
 			max -= mesh_pos;
 			float radius = sqrt(pow(max.x, 2) + pow(max.y, 2) + pow(max.z, 2));
@@ -295,16 +373,20 @@ void GLRenderer::RayTracing() {
 
 // Very basic box-based
 bool GLRenderer::CollisionDetection() {
-	glm::vec3 currPosition = position + 35.0f * direction;
+	glm::vec3 currPosition = position + 50.0f * direction;
 	bool hit = false;
 
 	for (int j = 0; j < m_Models.size(); j++) {
 		if (glfwWindowShouldClose(win)) { return false; }
 		if (m_Models[j]->name == "first_person") continue;
-		if (m_Models[j]->name == "ground") continue;
+		if (m_Models[j]->name == "sky") continue;
 
 		for (int k = 0; k < m_Models[j]->meshes.size(); k++) {
 			Mesh * mesh = &m_Models[j]->meshes[k];
+
+			glm::vec3 mesh_pos(mesh->ModelMat * mesh->centroid);
+
+			if (glm::distance(position, mesh_pos) > 500) continue;
 
 			glm::vec3 max(mesh->ModelMat * mesh->max);
 			glm::vec3 min(mesh->ModelMat * mesh->min);
@@ -313,9 +395,7 @@ bool GLRenderer::CollisionDetection() {
 				if (currPosition.y <= max.y && currPosition.y >= min.y || currPosition.y >= max.y && currPosition.y <= min.y) {
 					if (currPosition.z <= max.z && currPosition.z >= min.z || currPosition.z >= max.z && currPosition.z <= min.z) {
 						system("cls");
-						std::cout << "PENETRATED: " << mesh->parent->name << "\n";
-
-						glm::vec3 mesh_pos(mesh->ModelMat * mesh->centroid);
+						std::cout << "PENETRATED: " << mesh->parent->name << "\n";						
 
 						glm::vec3 push_back = currPosition - mesh_pos - direction;
 
@@ -344,7 +424,7 @@ void GLRenderer::HandleModelManipulation() {
 
 	OutputModelMatrices();
 
-	if (selected->name != "ground") {
+	if (selected->name != "sky") {
 		if (glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS){
 			ModelTranslate(direction * 5.0f, selected);
 		}
@@ -469,7 +549,7 @@ void GLRenderer::UpdateMatricesFromInputs(){
 	}
 
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 100000.0f);
+	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 15000.0f);
 
 	// Camera matrix
 	View = glm::lookAt(position, position + direction, up);	
@@ -498,6 +578,31 @@ void GLRenderer::UpdateMatricesFromInputs(){
 	// Reset mouse position for next frame
 	glfwSetCursorPos(win, width / 2, height / 2);
 
+	// Update spotlight pos/dir
+	m_Lights[2].LightPosition_worldspace = position;
+	m_Lights[2].LightPosition_worldspace.y;
+	m_Lights[2].SpotLightDirection_worldspace = direction;
+
+	glUniform3fv(m_Lights[2].LightPosition_worldspace_ID, 1, &m_Lights[2].LightPosition_worldspace[0]);
+	glUniform3fv(m_Lights[2].SpotLightDirection_worldspace_ID, 1, &m_Lights[2].SpotLightDirection_worldspace[0]);
+
+	if (glfwGetKey(win, GLFW_KEY_L) == GLFW_PRESS){
+
+		if (glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+			m_Lights[2].LightPower += 100.0f;
+		}
+		else {
+			if (m_Lights[2].LightPower >= 100.0f) {
+				m_Lights[2].LightPower -= 100.0f;
+			}
+		}
+
+
+		m_Lights[2].LightPower_ID = glGetUniformLocation(m_pProgram->GetID(), "Lights[2].LightPower");
+		glUniform1f(m_Lights[2].LightPower_ID, m_Lights[2].LightPower);
+	}
+
+
 	// For the next frame, the "last time" will be "now"
 	lastTime = currentTime;
 }
@@ -512,21 +617,19 @@ void GLRenderer::DestroyScene()
 	m_pProgram->DetachShader(m_pVertSh);
 	m_pProgram->DetachShader(m_pFragSh);
 
-	m_pProgram_terrain->DetachShader(m_pVertSh_terrain);
-	m_pProgram_terrain->DetachShader(m_pFragSh_terrain);
-
 	Sleep(3000);
 
 	for (int i = 0; i < m_Models.size(); i++) {
 		delete m_Models[i];
 	}
+
+	for (int i = 0; i < m_ModelsBank.size(); i++) {
+		delete m_ModelsBank[i];
+	}
+
 	delete m_pProgram;
 	delete m_pVertSh;
 	delete m_pFragSh;
-
-	delete m_pProgram_terrain;
-	delete m_pVertSh_terrain;
-	delete m_pFragSh_terrain;
 }
 
 
@@ -609,16 +712,29 @@ void GLRenderer::OutputModelMatrices() {
 	if (glfwGetKey(win, GLFW_KEY_O) == GLFW_PRESS) {
 
 		std::ofstream File("Object Matrices.txt");
-		for (int i = 0; i < m_Models.size(); i++) {
+		std::vector<std::string> already_out;
+		bool visited = false;
 
+		for (int i = 0; i < m_Models.size(); i++) {	
 			Model* model = m_Models[i];
+			visited = false;
 			if (model->name == "first_person") continue;
+			if (model->name == "sky") continue;
 
-			if (model->meshes.size() > 0) {				
+			for (int k = 0; k < already_out.size(); k++) {
+				if (model->name == already_out[k]) {
+					visited = true;
+				}
+			}
+			if (visited) continue;
+
+			if (model->meshes.size() > 0) {		
+
+				already_out.push_back(model->name);
 
 				glm::mat4 matrix = model->meshes[0].ModelMat;
-				std::string is_centered = "true";
-				if (!model->centered) is_centered = "false";
+				std::string is_centered = "false";
+				if (model->centered) is_centered = "true";
 				File << model->name << "\t[" << model->path << "]\t[" << model->mID << "]\t{" << is_centered << "}\n" << glm::to_string(matrix) << "\n\n";
 			}
 		}

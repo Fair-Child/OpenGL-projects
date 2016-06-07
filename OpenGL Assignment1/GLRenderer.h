@@ -1,26 +1,12 @@
 #include "all_headers.h"
 
-// Struct for file information -> used to save/load maps
-struct ModelData {
-	int id;
-	std::string name;
-	std::string path;
-	glm::mat4 transformation;	// Transformation set to the model
-	bool centered;				// If centroid is at object origin
-	bool instanced;
-};
+// TODO: Move skybox with camera
+// TODO: Proceduraly generate terrain
+// TODO: Random point lights in world
 
-// TODO: Save matrix multiplications in the model, rather than recompute every frame? I tried but kept making mistakes and it was hard to keep track of :/
-// TODO: Move physics stuff into new GLEngine class, to reduce tasks of GLRenderer
-// TODO: Add distance check before iterating over models in collision / raytracing
+// TODO: Add enemy AI class with basic hp, add shooting particles / effects?
 // TODO: Add support for resizing with mouse
-// TODO: Implement lighting (shader already done in assignment 2)
-
-// TODO: Create playable terrain proceduraly! Using splines?
-// TODO: Save / Load Terrain
-// TODO: Model spawning on terrain without conflicts
 // TODO: Add shadows ^.^
-// TODO: Add enemy AI class with basic hp, add particles / effects?
 
 /* The engine & renderer combined.
    Manages the shaders, input/output, manipulates the models */
@@ -37,16 +23,20 @@ public:
 protected:
 
 	void SetData();
+	void PrepareLights();
 	void UpdateMatricesFromInputs();		// Handles Camera movement
 	bool CollisionDetection();				// Bounding-box based collision detection with camera				-> TODO: Save matrix multiplications in the model
 	void GroundDetection();					// Basic plane collision detection with camera						-> TODO: Terrain
 	void RayTracing();						/* Shoots at camera direction,
 											   & computes intersection with closest sphere surrounding model 	-> TODO: Save matrix multiplications in the model*/
 
-	void AddModelFromSaved(GLchar* path, std::string name, bool centered = true);		// Creates or copies existing instance
-	void CopyModelAtMyLocation(Model* copy_this);										// Copy and moves model to camera
-	Model* CopyModel(Model* copy_this);													// Copy constructor... avoids reloading object from files.
+	void LoadBankModels();														// Loads all models into the "bank"
+	void RenderModel(std::string name, bool transform = false);					// Copies model from bank
 
+	void CopyModelAtMyLocation(Model* copy_this);								// Copy and moves model to camera
+	Model* CopyModel(Model* copy_this);											// Copy constructor... avoids reloading object from files.
+
+	void ScatterModels();					// Scatters random model from bank into the world
 	void HandleModelManipulation();			// Scales (mouse button 4,5) / Translates (right/left click) selected model
 	void HandleSpawning();					// Spawns copy of pointed model under camera (P KEY)
 	void OutputModelMatrices();				// Writes all the existing model's Current Transformation Matrix into "Object Matrices.txt" (O KEY)
@@ -57,10 +47,6 @@ protected:
 	GLShader*  m_pVertSh;					// Vertex shader
 	GLShader*  m_pFragSh;					// Fragment shader
 
-	GLProgram* m_pProgram_terrain;			// ^ Same for Terrain
-	GLShader*  m_pVertSh_terrain;
-	GLShader*  m_pFragSh_terrain;
-
 	GLuint MatrixID;						// handle for our "MVP" uniform					-> TODO: Do the matrix multiplications in the shader
 	GLuint MatrixID_terrain;
 
@@ -68,6 +54,10 @@ protected:
 
 	Terrain m_Terrain;						// Terrain handler
 	std::vector<Model *> m_Models;			// Model container
+	std::vector<LightInfo> m_Lights;		// Light container
+	Model * skybox;
+
+	std::vector<Model *> m_ModelsBank;		// Models not rendered, used to copy
 
 	glm::mat4 Projection;					// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	glm::mat4 View;							// Camera matrix

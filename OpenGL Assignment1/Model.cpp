@@ -92,6 +92,10 @@ void Model::Center() {
 		meshes[i].ModelMat[3].x = 0;
 		meshes[i].ModelMat[3].y = 0;
 		meshes[i].ModelMat[3].z = 0;
+
+		if (centered) {
+			meshes[i].ModelMat = glm::translate(meshes[i].ModelMat, glm::vec3(0, -meshes[i].min.y * scale.y, 0));
+		}
 	}
 }
 
