@@ -50,7 +50,6 @@ void GLRenderer::PrepareScene()
 
 	m_pProgram->Use();
 
-	speed = 1000;
 	SetData();
 }
 
@@ -302,13 +301,17 @@ void GLRenderer::GroundDetection() {
 	pos.x = std::floor(currPosition.x / m_Terrain.X_SCALAR) * m_Terrain.X_SCALAR;
 	pos.z = std::floor(currPosition.z / m_Terrain.Z_SCALAR) * m_Terrain.Z_SCALAR;
 
+	Vertex intersection;
 	float terrain_depth = 0;
 
 	if (m_Terrain.DepthMap.count(pos) >= 1) {
-		terrain_depth = m_Terrain.DepthMap.find(pos)->second.Position.y;
+
+		intersection = m_Terrain.DepthMap.find(pos)->second;
+		terrain_depth = intersection.Position.y;
 
 		if (currPosition.y < terrain_depth || glm::distance(terrain_depth, currPosition.y) < 10) {
-			position.y += speed / 5;
+
+			position += intersection.Normal * speed / 5.0f;
 			return;
 		}
 	}

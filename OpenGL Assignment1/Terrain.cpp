@@ -260,14 +260,15 @@ void Terrain::LoadVertices() {
 						vec3 newPoint3 = topPos[j + 1] + (bottomPos[j + 1] - topPos[j + 1]) * ((float)i / numOfVerticalTriangle);
 						vec3 newPoint4 = topPos[j + 1] + (bottomPos[j + 1] - topPos[j + 1]) * ((float)(i + 1) / numOfVerticalTriangle);
 						
-						Vertex * newV1 = new Vertex;
-						newV1->Position = newPoint1;
-						Vertex * newV2 = new Vertex;
-						newV2->Position = newPoint2;
-						Vertex * newV3 = new Vertex;
-						newV3->Position = newPoint3;
-						Vertex * newV4 = new Vertex;
-						newV4->Position = newPoint4;
+						Vertex newV1;
+						Vertex newV2;
+						Vertex newV3;
+						Vertex newV4;
+
+						newV1.Position = newPoint1;						
+						newV2.Position = newPoint2;						
+						newV3.Position = newPoint3;						
+						newV4.Position = newPoint4;
 
 						// normal for v1, v2, v3
 						glm::vec3 u = newPoint1 - newPoint2;
@@ -275,14 +276,14 @@ void Terrain::LoadVertices() {
 						normal = glm::cross(u, v);
 						normal = glm::normalize(normal);
 
-						newV1->Normal = normal;
-						newV1->TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
+						newV1.Normal = normal;
+						newV1.TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
 
-						newV2->Normal = normal;
-						newV2->TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
+						newV2.Normal = normal;
+						newV2.TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
 
-						newV3->Normal = normal;
-						newV3->TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
+						newV3.Normal = normal;
+						newV3.TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
 
 						// Normals for v3, v2, v4
 						u = newPoint2 - newPoint4;
@@ -290,16 +291,16 @@ void Terrain::LoadVertices() {
 						normal = glm::cross(u, v);
 						normal = glm::normalize(normal);
 
-						newV4->Normal = normal;
-						newV4->TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
+						newV4.Normal = normal;
+						newV4.TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
 
-						vertices.push_back(*newV1);
-						vertices.push_back(*newV2);
-						vertices.push_back(*newV3);
+						vertices.push_back(newV1);
+						vertices.push_back(newV2);
+						vertices.push_back(newV3);
 
-						vertices.push_back(*newV3);
-						vertices.push_back(*newV2);
-						vertices.push_back(*newV4);
+						vertices.push_back(newV3);
+						vertices.push_back(newV2);
+						vertices.push_back(newV4);
 					}
 				}
 
