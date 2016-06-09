@@ -504,6 +504,10 @@ void GLRenderer::UpdateMatricesFromInputs(){
 					cos(verticalAngle) * cos(horizontalAngle)
 					);
 
+	// TODO: added for debugging purposes, remove this when submit
+	printf("direc: %f, %f, %f \n", direction.x, direction.y, direction.z);
+	printf("pos: %f, %f, %f \n", position.x, position.y, position.z);
+
 	// Right vector
 	right = glm::vec3(
 		sin(horizontalAngle - 3.14f / 2.0f),
@@ -537,6 +541,8 @@ void GLRenderer::UpdateMatricesFromInputs(){
 	if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS){
 		position += up * deltaTime * speed;
 	}
+
+	m_Terrain.ExpandTerrainBasedOnCamPos(position);
 
 	// Resize window with Page Up / Down
 	if (glfwGetKey(win, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS){

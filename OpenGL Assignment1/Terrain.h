@@ -3,7 +3,7 @@
 #define X_TRANSLATE -13000
 #define Z_TRANSLATE -13000
 #define NUM_OF_TEXTURES 3
-#define NUM_OF_LINES 10
+#define NUM_OF_LINES 15
 
 
 /* TODO:
@@ -12,7 +12,6 @@
 
 class Terrain {
 	friend class GLRenderer;
-
 protected:
 
 	std::map<_vec2, Vertex> DepthMap;
@@ -27,6 +26,8 @@ protected:
 
 	bool CheckNothingNearby(_vec2 pos);		// Checks for spawned models near given position
 
+	void ExpandTerrainBasedOnCamPos(glm::vec3 position);
+
 	static int MAX_X_POS;
 	static int MAX_Z_POS;
 
@@ -39,6 +40,13 @@ private:
 	void GenerateDepthMap();
 	void ModifyTerrain();
 	void LoadVertices();
+	void ExpandTerrain(_vec2 newTile);
+	void SetupTerrainEdges();
 
 	GLuint VAO, VBO;
+
+	int m_TextureNum;
+
+	std::vector<_vec2> m_Tiles;
+	_vec2 m_TerrainEdges;
 };

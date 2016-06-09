@@ -73,63 +73,92 @@ void Terrain::ModifyTerrain() {
 
 	for (int i = 0; i < NUM_OF_LINES; i++) {
 		_vec2 start;
-		_vec2 it;
-		int x_increment = (rand() % 2) - 1;
-		int z_increment = (rand() % 2) - 1;
-		if (x_increment == 0 && z_increment == 0) {
-			x_increment = 1;
+
+		bool spawnSpikes = (rand() % 2) == 1 ? true : false;
+		
+		float lineAngle = (rand() % 3) * 90.0f;
+		if (spawnSpikes) {
+			lineAngle = (rand() % 9) * 40.0f;
 		}
+
 		float height = rand() % 50 + 1;
 		int width = rand() % 100 + 1;
+		float depth = rand() % 500 + 100;
+
+		if (spawnSpikes) {
+			depth = rand() % 200 + 100;
+		}
 
 		auto pt = DepthMap.begin();
 		std::advance(pt, rand() % DepthMap.size());
 		start = pt->first;
 
-		it = start;
+		float slopeAngle = (float)(rand() % 60 + 30);
+		float tangent = glm::tan(glm::radians(slopeAngle));
+		int offSet = (int)(depth / X_SCALAR / tangent);
 
-		do {
-			_vec2 jt = it;
-			_vec2 ojt = it;
+		int newHeight = height + 2 * offSet;
+		int newWidth = width + 2 * offSet;
 
-			if (DepthMap.count(it) <= 0) {
-				break;
+		vec2 rectangleCenter = vec2(newWidth * 0.5f, newHeight * 0.5f);
+
+		float diagonalAngle = glm::atan((float)newHeight / newWidth);
+		diagonalAngle = glm::degrees(diagonalAngle);
+
+		for (int i = 0; i < newHeight; ++i) {
+			for (int j = 0; j < newWidth; ++j) {
+
+				float vertexDepth = depth;
+				if (j < offSet || j >(offSet + width) || i < offSet || i > (offSet + height)) {
+					// smoothing
+					float xDisToFlatEdge = 0.0f;
+					float zDisToFlatEdge = 0.0f;
+
+					if (i < offSet) {
+						xDisToFlatEdge = i;
+					}
+					else if (i > (offSet + height)) {
+						xDisToFlatEdge = newHeight - i;
+					}
+					if (j < offSet) {
+						zDisToFlatEdge = j;
+					}
+					else if (j > (offSet + width)) {
+						zDisToFlatEdge = newWidth - j;
+					}
+
+					float averageDisToFlatEdge = 0.5 * (xDisToFlatEdge + zDisToFlatEdge);
+					float vertexDepthInX = depth * xDisToFlatEdge / offSet;
+					float vertexDepthInZ = depth * zDisToFlatEdge / offSet;
+
+					vec2 centerToPoint = vec2((float)j, (float)i) - rectangleCenter;
+					float angleOfCenterToPoint = glm::angle<float>(vec2(1.0f, 0.0f), normalize(centerToPoint));
+					angleOfCenterToPoint = glm::degrees(angleOfCenterToPoint);
+					
+					if (angleOfCenterToPoint <= diagonalAngle || angleOfCenterToPoint >= (180 - diagonalAngle)) {
+						vertexDepth = vertexDepthInZ;
+					}
+					else {
+						vertexDepth = vertexDepthInX;
+					}
+				}
+
+				glm::vec2 originToPoint = glm::vec2(j, i);
+				vec2 newOriginToPoint = glm::rotate<float>(originToPoint, glm::radians(lineAngle));
+
+				_vec2 newPointOffSet;
+				newPointOffSet.x =  (int)glm::ceil(newOriginToPoint.x) * X_SCALAR;
+				newPointOffSet.z = (int)glm::ceil(newOriginToPoint.y) * Z_SCALAR;
+
+				_vec2 newPoint;
+				newPoint.x = start.x + newPointOffSet.x;
+				newPoint.z = start.z + newPointOffSet.z;
+
+				if (DepthMap.count(newPoint) > 0){
+					DepthMap.find(newPoint)->second.Position.y += vertexDepth;
+				}
 			}
-
-			for (int j = 1; j < width; j++) {
-
-				if (DepthMap.count(jt) <= 0 || DepthMap.count(ojt) <= 0) {
-					break;
-				}
-
-				if (j * 10 > height) {
-					//break;
-				}
-
-				DepthMap.find(jt)->second.Position.y += height - j * 10;
-
-				if (j != 1) {
-					DepthMap.find(ojt)->second.Position.y += height - j * 10;
-				}
-
-				if (x_increment == 1 || x_increment == -1) {
-					jt.z += Z_SCALAR;
-					ojt.z -= Z_SCALAR;
-
-				} else if (z_increment == 1 || z_increment == -1) {
-
-					jt.x += X_SCALAR;
-					ojt.x -= X_SCALAR;
-				}
-
-			}			
-
-			it.x += x_increment * X_SCALAR;
-			it.z += z_increment * Z_SCALAR;
-
-		} while (true);
-		
-
+		}
 	}
 }
 
@@ -336,6 +365,70 @@ bool Terrain::CheckNothingNearby(_vec2 pos) {
 	return nothing_nearby;
 }
 
+void Terrain::ExpandTerrainBasedOnCamPos(vec3 position) {
+	float terrainLengthInX = MAX_X_POS * X_SCALAR;
+	float terrainLengthInZ = MAX_Z_POS * Z_SCALAR;
+	int xInTiles = glm::floor((position.x - X_TRANSLATE) / terrainLengthInX);
+	int zInTiles = glm::floor((position.z - Z_TRANSLATE) / terrainLengthInZ);
+
+	float tileMinX = X_TRANSLATE + xInTiles * terrainLengthInX;
+	float tileMaxX = tileMinX + terrainLengthInX;
+	float tileMinZ = Z_TRANSLATE + zInTiles * terrainLengthInZ;
+	float tileMaxZ = tileMinZ + terrainLengthInZ;
+
+	_vec2 newTile;
+	if (position.x < (tileMinX + m_TerrainEdges.x)) {
+		// add terrain in (xInTiles - 1, zInTiles)
+		newTile.x = xInTiles - 1;
+		newTile.z = zInTiles;
+		ExpandTerrain(newTile);
+		if (position.z < (tileMinZ + m_TerrainEdges.z)) {
+			// add terrain in (xInTiles - 1, zInTiles - 1)
+			newTile.x = xInTiles - 1;
+			newTile.z = zInTiles - 1;
+			ExpandTerrain(newTile);
+		}
+		else if (position.z >(tileMaxZ - m_TerrainEdges.z)) {
+			// add terrain in (xInTiles - 1, zInTiles + 1 )
+			newTile.x = xInTiles - 1;
+			newTile.z = zInTiles + 1;
+			ExpandTerrain(newTile);
+		}
+	}
+
+	if (position.x > (tileMaxX - m_TerrainEdges.x)) {
+		// add terrain in (xInTiles + 1, zInTiles)
+		newTile.x = xInTiles + 1;
+		newTile.z = zInTiles;
+		ExpandTerrain(newTile);
+		if (position.z < (tileMinZ + m_TerrainEdges.z)) {
+			// add terrain in (xInTiles + 1, zInTiles - 1)
+			newTile.x = xInTiles + 1;
+			newTile.z = zInTiles - 1;
+			ExpandTerrain(newTile);
+		}
+		else if (position.z >(tileMaxZ - m_TerrainEdges.z)) {
+			// add terrain in (xInTiles + 1, zInTiles + 1 )
+			newTile.x = xInTiles + 1;
+			newTile.z = zInTiles + 1;
+			ExpandTerrain(newTile);
+		}
+	}
+
+	if (position.z < (tileMinZ + m_TerrainEdges.z)) {
+		// add terrain in (xInTiles, zInTiles -1 )
+		newTile.x = xInTiles;
+		newTile.z = zInTiles - 1;
+		ExpandTerrain(newTile);
+	}
+
+	if (position.z > (tileMaxZ - m_TerrainEdges.z)) {
+		// add terrain in (xInTiles, zInTiles + 1 )
+		newTile.x = xInTiles;
+		newTile.z = zInTiles + 1;
+		ExpandTerrain(newTile);
+	}
+}
 
 void Terrain::SetupTerrain() {
 
@@ -344,12 +437,18 @@ void Terrain::SetupTerrain() {
 	GenerateDepthMap();
 	LoadVertices();
 
-	int tex_num = 0;
-	tex_num = rand() % NUM_OF_TEXTURES + 1;
+	SetupTerrainEdges();
+
+	_vec2 newTile;
+	newTile.x = 0.0f;
+	newTile.z = 0.0f;
+	m_Tiles.push_back(newTile);
+
+	m_TextureNum = rand() % NUM_OF_TEXTURES + 1;
 
 	glGenTextures(1, &terrain_texture);
 
-	std::string tex_path = "./models/terrain" + std::to_string(tex_num) + ".jpg";
+	std::string tex_path = "./models/terrain" + std::to_string(m_TextureNum) + ".jpg";
 	int width, height;
 
 	unsigned char* image = SOIL_load_image(tex_path.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
@@ -388,4 +487,129 @@ void Terrain::SetupTerrain() {
 	// Vertex Texture Coords
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, TexCoords));
+}
+
+void Terrain::SetupTerrainEdges() {
+	m_TerrainEdges.x = MAX_X_POS * X_SCALAR * 0.3f;
+	m_TerrainEdges.z = MAX_Z_POS * Z_SCALAR * 0.3f;
+}
+
+void Terrain::ExpandTerrain(_vec2 newTile) {
+
+	for (int i = 0; i < m_Tiles.size(); ++i) {
+		if (newTile.x == m_Tiles[i].x && newTile.z == m_Tiles[i].z) {
+			return;
+		}
+	}
+
+ 	m_Tiles.push_back(newTile);
+
+	float terrainLengthInX = MAX_X_POS * X_SCALAR;
+	float terrainLengthInZ = MAX_Z_POS * Z_SCALAR;
+
+	int x = 0;
+	int z = 0;
+
+	float u = 0.0f;
+	float v = 0.0f;
+
+	for (int j = 0; j < MAX_Z_POS; j++) {
+
+		x = 0;
+		for (int i = 0; i < MAX_X_POS; i++) {
+
+			_vec2 pos1;
+			Vertex v1;
+			pos1.x = x * X_SCALAR + X_TRANSLATE;
+			pos1.z = z * Z_SCALAR + Z_TRANSLATE;
+
+			v1 = DepthMap.find(pos1)->second;
+			v1.Position.x += newTile.x * terrainLengthInX;
+			v1.Position.z += newTile.z * terrainLengthInZ;
+			glm::vec3 p1 = v1.Position;
+
+			_vec2 pos2;
+			Vertex v2;
+			pos2.x = x * X_SCALAR + X_TRANSLATE;
+			pos2.z = (z + 1) * Z_SCALAR + Z_TRANSLATE;
+
+			v2 = DepthMap.find(pos2)->second;
+			v2.Position.x += newTile.x * terrainLengthInX;
+			v2.Position.z += newTile.z * terrainLengthInZ;
+			glm::vec3 p2 = v2.Position;
+
+			_vec2 pos3;
+			Vertex v3;
+			pos3.x = (x + 1) * X_SCALAR + X_TRANSLATE;
+			pos3.z = z * Z_SCALAR + Z_TRANSLATE;
+
+			v3 = DepthMap.find(pos3)->second;
+			v3.Position.x += newTile.x * terrainLengthInX;
+			v3.Position.z += newTile.z * terrainLengthInZ;
+			glm::vec3 p3 = v3.Position;
+
+			_vec2 pos4;
+			Vertex v4;
+			pos4.x = (x + 1) * X_SCALAR + X_TRANSLATE;
+			pos4.z = (z + 1) * Z_SCALAR + Z_TRANSLATE;
+
+			v4 = DepthMap.find(pos4)->second;
+			v4.Position.x += newTile.x * terrainLengthInX;
+			v4.Position.z += newTile.z * terrainLengthInZ;
+			glm::vec3 p4 = v4.Position;
+
+			float yDistP1P2 = glm::abs(p2.y - p1.y);
+			float yDistP4P2 = glm::abs(p2.y - p4.y);
+
+			float yDistP1P3 = glm::abs(p3.y - p1.y);
+			float yDistP4P3 = glm::abs(p3.y - p4.y);
+
+			float maxHorizontalYDist = glm::max(yDistP1P3, yDistP4P2);
+			float maxVerticalYDist = glm::max(yDistP1P2, yDistP4P3);
+
+			//if (maxHorizontalYDist <= HEIGHT_SCALAR && maxVerticalYDist <= HEIGHT_SCALAR) {
+				// Normals for v1, v2, v3
+				glm::vec3 u = p1 - p2;
+				glm::vec3 v = p1 - p3;
+				glm::vec3 normal = glm::cross(u, v);
+				normal = glm::normalize(normal);
+
+				v1.Normal = normal;
+				v1.TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
+				vertices.push_back(v1);
+
+				v2.Normal = normal;
+				v2.TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
+				vertices.push_back(v2);
+
+				v3.Normal = normal;
+				v3.TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
+				vertices.push_back(v3);
+
+				// Normals for v3, v2, v4
+				u = p2 - p4;
+				v = p2 - p3;
+				normal = glm::cross(u, v);
+				normal = glm::normalize(normal);
+
+				vertices.push_back(v3);
+				vertices.push_back(v2);
+
+				v4.Normal = normal;
+				v4.TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
+				vertices.push_back(v4);
+
+				float angle = glm::dot(normal, glm::vec3(1, 0, 0));
+				if (angle < 0.10) {
+					SpawnMap.insert(std::pair<_vec2, bool>(pos4, false));
+				}
+			//}
+			x++;
+		}
+
+		z++;
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 }
