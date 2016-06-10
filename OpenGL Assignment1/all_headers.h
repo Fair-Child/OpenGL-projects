@@ -42,6 +42,8 @@
 #include <gtx/intersect.hpp>
 #include <gtx/string_cast.hpp>
 #include <gtx/spline.hpp>
+#include <gtx/rotate_vector.hpp>
+#include <gtx/vector_angle.hpp>
 
 //--- My Classes
 #include "my_structs.h"

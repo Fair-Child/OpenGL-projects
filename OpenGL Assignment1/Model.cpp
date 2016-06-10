@@ -15,7 +15,9 @@ Model::Model(GLchar* _path, std::string _name, bool _centered)	{
 	mID = unique_ID;
 	++unique_ID;
 
-	LoadModel(_path);	
+	LoadModel(_path);
+
+	ready = true;
 }
 
 Model::Model(Model * copy_this) {

@@ -2,6 +2,9 @@
 
 GLRenderer::GLRenderer(GLFWwindow * _win){ win = _win; }
 
+bool GLRenderer::FINISHED_SPAWNING = true;
+int GLRenderer::PENDING_UPDATE = -1;
+
 // Loads the shaders and programs, initializes opengl params
 // Mesh and Terrain Setup themselves
 void GLRenderer::PrepareScene()
@@ -162,6 +165,7 @@ void GLRenderer::LoadBankModels() {
 
 			// Hacky, does not support rotations
 			m_ModelsBank.back()->scale = glm::vec3(model_data[i].transformation[0].x, model_data[i].transformation[1].y, model_data[i].transformation[2].z);
+			//m_ModelsBank.back()->scale *= 0.5f;
 
 		}
 
@@ -185,11 +189,9 @@ void GLRenderer::RenderModel(std::string name, bool transform) {
 
 void GLRenderer::ScatterModels() {
 
-	int NUM_OF_MODELS = m_Terrain.DepthMap.size() / 100;
+	//int NUM_OF_MODELS = 1;//m_Terrain.DepthMap.size() / 100;
 	int copied_model_index = 0;
 	_vec2 pos;
-
-	srand(time(NULL));
 
 	for (int i = 0; i < NUM_OF_MODELS; i++) {
 
@@ -228,12 +230,15 @@ void GLRenderer::SetData()
 
 	m_Models.push_back(new Model("./models/skybox/skybox.obj", "sky"));
 	skybox = m_Models.back();	
-	skybox->Scale(glm::vec3(600, 150, 600)); 	skybox->scale = glm::vec3(600, 150, 600);
+	skybox->Scale(glm::vec3(500, 150, 500)); 	skybox->scale = glm::vec3(500, 150, 500);
 	skybox->Translate(glm::vec3(0, 10, 0));
 
 	m_Models.push_back(new Model("./models/flyertug/FlyerTug(obj).obj", "first_person"));	// First person model
-	m_Models.back()->scale = glm::vec3(0.35, 0.35, 0.35);
+	m_Models.back()->scale = glm::vec3(0.5, 0.5, 0.5);
 	
+	srand(time(NULL));
+
+	RequestUserInput();
 	ScatterModels();
 }
 
@@ -262,7 +267,8 @@ void GLRenderer::DrawScene()
 	m_Terrain.Draw(win);
 
 	// Draw Models
-	for (int i = 0; i < m_Models.size(); i++) {
+	int models_count = m_Models.size();
+	for (int i = 0; i < models_count; i++) {
 
 		if (m_Models[i]->name == "sky") {
 			glDisable(GL_CULL_FACE);
@@ -270,12 +276,14 @@ void GLRenderer::DrawScene()
 
 		for (int j = 0; j < m_Models[i]->meshes.size(); j++) {
 
-			glUniformMatrix4fv(M_MatrixID, 1, GL_FALSE, &m_Models[i]->meshes[j].ModelMat[0][0]);
+			if (m_Models[i]->meshes[j].ready) {
+				glUniformMatrix4fv(M_MatrixID, 1, GL_FALSE, &m_Models[i]->meshes[j].ModelMat[0][0]);
 
-			glUniformMatrix4fv(V_MatrixID, 1, GL_FALSE, &View[0][0]);
+				glUniformMatrix4fv(V_MatrixID, 1, GL_FALSE, &View[0][0]);
 
-			MVP = Projection * View * m_Models[i]->meshes[j].ModelMat;
-			glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+				MVP = Projection * View * m_Models[i]->meshes[j].ModelMat;
+				glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+			}
 			m_Models[i]->meshes[j].Draw(win);
 		}
 
@@ -294,24 +302,55 @@ void GLRenderer::DrawScene()
 // Basic bounding-box detection
 void GLRenderer::GroundDetection() {
 	glm::vec3 currPosition = position + 25.0f * direction;
-	currPosition = currPosition + 20.0f * - up;
+	currPosition = currPosition + 20.0f * -up;
+
+	std::vector<_vec2> near_intersections;
 
 	_vec2 pos;
-
 	pos.x = std::floor(currPosition.x / m_Terrain.X_SCALAR) * m_Terrain.X_SCALAR;
 	pos.z = std::floor(currPosition.z / m_Terrain.Z_SCALAR) * m_Terrain.Z_SCALAR;
+	near_intersections.push_back(pos);
 
-	float terrain_depth = 0;
+	pos.x += m_Terrain.X_SCALAR;
+	near_intersections.push_back(pos);
 
-	if (m_Terrain.DepthMap.count(pos) >= 1) {
-		terrain_depth = m_Terrain.DepthMap.find(pos)->second.Position.y;
+	pos.z += m_Terrain.Z_SCALAR;
+	near_intersections.push_back(pos);
 
-		if (currPosition.y < terrain_depth || glm::distance(terrain_depth, currPosition.y) < 10) {
-			position.y += speed / 5;
-			return;
+	pos.x -= m_Terrain.X_SCALAR;
+	near_intersections.push_back(pos);
+
+	pos.x -= m_Terrain.X_SCALAR;
+	near_intersections.push_back(pos);
+
+	pos.z -= m_Terrain.Z_SCALAR;
+	near_intersections.push_back(pos);
+
+
+	Vertex intersection;
+	glm::vec3 terrain_pos;
+
+	for (int i = 0; i < near_intersections.size(); i++) {
+		pos = near_intersections[i];
+
+		if (m_Terrain.DepthMap.count(pos) > 0) {
+
+			intersection = m_Terrain.DepthMap.find(pos)->second;
+			terrain_pos = intersection.Position;
+
+			if (currPosition.y < terrain_pos.y || glm::distance(terrain_pos, currPosition) < 10) {
+
+				glm::vec3 push_back = intersection.Normal * speed / 5.0f;
+				position += push_back;
+
+				// Translate skybox
+				skybox->Translate(glm::vec3(push_back.x / skybox->scale.x, 0, push_back.z / skybox->scale.z));
+
+				return;
+			}
 		}
-	}
 
+	}
 	return;
 }
 
@@ -373,7 +412,7 @@ void GLRenderer::RayTracing() {
 
 // Very basic box-based
 bool GLRenderer::CollisionDetection() {
-	glm::vec3 currPosition = position + 50.0f * direction;
+	glm::vec3 currPosition = position + 75.0f * direction;
 	bool hit = false;
 
 	for (int j = 0; j < m_Models.size(); j++) {
@@ -403,6 +442,9 @@ bool GLRenderer::CollisionDetection() {
 						push_back *= speed / 10;
 
 						position += push_back;
+
+						// Translate skybox
+						skybox->Translate(glm::vec3(push_back.x / skybox->scale.x, 0, push_back.z / skybox->scale.z));
 						
 						hit = true;
 					}
@@ -444,8 +486,25 @@ void GLRenderer::HandleModelManipulation() {
 	}
 }
 
-// TODO: make it procedural, based on current position and based on file/algorithm
+
+// Spawn a random model every 10 seconds when holding W
+// Expand terrain if needed
 void GLRenderer::HandleSpawning() {
+
+
+	if (FINISHED_SPAWNING && PENDING_UPDATE >= -1) {
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_Terrain.VBO);
+		glBufferData(GL_ARRAY_BUFFER, m_Terrain.vertices.size() * sizeof(Vertex), &m_Terrain.vertices[0], GL_STATIC_DRAW);
+
+		if (PENDING_UPDATE > -1) {
+			//TODO: User input for number of models spawned
+			std::async(&GLRenderer::ScatterModels, this);
+			PENDING_UPDATE--;
+		}
+	}
+
+	std::async(&Terrain::ExpandTerrainBasedOnCamPos, &m_Terrain, position);	// In Parallel
 
 	if (glfwGetKey(win, GLFW_KEY_P) == GLFW_PRESS) {
 		// Static -> Called only first time
@@ -463,7 +522,6 @@ void GLRenderer::HandleSpawning() {
 }
 
 
-// TODO: move to somewhere around me, based on some algorithm -> note: avoid stacking
 void GLRenderer::CopyModelAtMyLocation(Model* copy_this) {
 	m_Models.push_back(new Model(copy_this));
 
@@ -503,6 +561,10 @@ void GLRenderer::UpdateMatricesFromInputs(){
 					cos(verticalAngle) * cos(horizontalAngle)
 					);
 
+	// TODO: added for debugging purposes, remove this when submit
+	//printf("direc: %f, %f, %f \n", direction.x, direction.y, direction.z);
+	//printf("pos: %f, %f, %f \n", position.x, position.y, position.z);
+
 	// Right vector
 	right = glm::vec3(
 		sin(horizontalAngle - 3.14f / 2.0f),
@@ -512,7 +574,7 @@ void GLRenderer::UpdateMatricesFromInputs(){
 
 	// Up vector
 	up = glm::cross(right, direction);
-
+	glm::vec3 old_position = position;
 
 	// Movement with Mouse
 	// Move forward
@@ -548,8 +610,12 @@ void GLRenderer::UpdateMatricesFromInputs(){
 		Reshape(width + width / 100, height + height / 100);
 	}
 
+	// Translate skybox
+	glm::vec3 delta = position - old_position;
+	skybox->Translate(glm::vec3(delta.x / skybox->scale.x, 0, delta.z / skybox->scale.z));
+
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 15000.0f);
+	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 11000.0f);
 
 	// Camera matrix
 	View = glm::lookAt(position, position + direction, up);	
@@ -602,7 +668,6 @@ void GLRenderer::UpdateMatricesFromInputs(){
 		glUniform1f(m_Lights[2].LightPower_ID, m_Lights[2].LightPower);
 	}
 
-
 	// For the next frame, the "last time" will be "now"
 	lastTime = currentTime;
 }
@@ -617,7 +682,7 @@ void GLRenderer::DestroyScene()
 	m_pProgram->DetachShader(m_pVertSh);
 	m_pProgram->DetachShader(m_pFragSh);
 
-	Sleep(3000);
+	Sleep(5000);
 
 	for (int i = 0; i < m_Models.size(); i++) {
 		delete m_Models[i];
@@ -838,4 +903,31 @@ void GLRenderer::ReadModelMatrices() {
 
 		model_data.push_back(model_info);
 	}
+}
+
+
+void GLRenderer::RequestUserInput() {
+
+
+	int num = 0;
+	std::string input = "";
+
+	while (num > 100 || num <= 0) {
+		std::cout << "Enter the number of models to spawn randomly: \n";
+		try {
+			std::cin >> input;
+			num = std::stoi(input);
+
+			if (num > 100 || num <= 0) {
+				std::cout << "Number must be between 1 and 100!\n";
+			}
+		}
+		catch (...) {
+			std::cout << "Wrong input!\n";
+			num = 0;
+			input = "";
+		}
+	}
+
+	NUM_OF_MODELS = num;
 }

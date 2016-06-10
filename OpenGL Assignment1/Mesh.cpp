@@ -14,7 +14,10 @@ Mesh::Mesh(std::vector<Vertex> _vertices, std::vector<GLuint> _indices, std::vec
 	indices = _indices;
 	textures = _textures;
 
+	ComputeCentroid();
 	SetupMesh();
+
+	ready = true;
 }
 
 Mesh::Mesh(Mesh * copy_this, int a) {
@@ -26,7 +29,9 @@ Mesh::Mesh(Mesh * copy_this, int a) {
 	textures = copy_this->textures;
 	indices = copy_this->indices;
 	centered = copy_this->centered;
-	SetupMesh();
+
+	ComputeCentroid();
+	//SetupMesh(); will be setup later on first draw attempt
 }
 
 void Mesh::AddVertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 uv) {
@@ -41,21 +46,27 @@ void Mesh::AddVertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 uv) {
 
 void Mesh::Draw(GLFWwindow * win) {
 
-	for (GLuint i = 0; i < textures.size(); i++)
-	{
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, textures[i].id);
-	}
-	glActiveTexture(GL_TEXTURE0);
+	if (ready) {
 
-	// Draw mesh
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+		for (GLuint i = 0; i < textures.size(); i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, textures[i].id);
+		}
+		glActiveTexture(GL_TEXTURE0);
+
+		// Draw mesh
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	}
+	else {
+		SetupMesh();
+		ready = true;
+	}
 
 }
 
-
-void Mesh::SetupMesh() {
+void Mesh::ComputeCentroid() {
 
 	// Find Center
 	for (int k = 0; k < vertices.size(); k++) {
@@ -75,6 +86,10 @@ void Mesh::SetupMesh() {
 	centroid.w = 1.0f;
 	max.w = 1.0f;
 	min.w = 1.0f;
+}
+
+
+void Mesh::SetupMesh() {
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO[0]);

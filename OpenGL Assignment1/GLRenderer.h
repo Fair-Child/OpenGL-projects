@@ -1,7 +1,6 @@
 #include "all_headers.h"
 
 // TODO: Move skybox with camera
-// TODO: Proceduraly generate terrain
 // TODO: Random point lights in world
 
 // TODO: Add enemy AI class with basic hp, add shooting particles / effects?
@@ -20,13 +19,16 @@ public:
 
 	GLRenderer(GLFWwindow * _win);
 
+	static bool FINISHED_SPAWNING;
+	static int PENDING_UPDATE;
+
 protected:
 
 	void SetData();
 	void PrepareLights();
 	void UpdateMatricesFromInputs();		// Handles Camera movement
 	bool CollisionDetection();				// Bounding-box based collision detection with camera				-> TODO: Save matrix multiplications in the model
-	void GroundDetection();					// Basic plane collision detection with camera						-> TODO: Terrain
+	void GroundDetection();					// Basic plane collision detection with camera
 	void RayTracing();						/* Shoots at camera direction,
 											   & computes intersection with closest sphere surrounding model 	-> TODO: Save matrix multiplications in the model*/
 
@@ -36,11 +38,13 @@ protected:
 	void CopyModelAtMyLocation(Model* copy_this);								// Copy and moves model to camera
 	Model* CopyModel(Model* copy_this);											// Copy constructor... avoids reloading object from files.
 
-	void ScatterModels();					// Scatters random model from bank into the world
+	int NUM_OF_MODELS = 1;
+	void ScatterModels();			// Scatters random model from bank into the world every 10 seconds when holding W and expands terrain if needed
 	void HandleModelManipulation();			// Scales (mouse button 4,5) / Translates (right/left click) selected model
 	void HandleSpawning();					// Spawns copy of pointed model under camera (P KEY)
 	void OutputModelMatrices();				// Writes all the existing model's Current Transformation Matrix into "Object Matrices.txt" (O KEY)
 	void ReadModelMatrices();				// Read "Object Matrices.txt" and fills the ModelData array, which holds transformation for a model
+	void RequestUserInput();
 
 protected:
 	GLProgram* m_pProgram;					// Program
@@ -81,7 +85,7 @@ protected:
 	float verticalAngle = 0.0f;					// Initial vertical angle : none			(angle around X)
 
 	float FoV = 45.0f;							// Field of View
-	float speed = 100.0f;						// 100 units / sec
+	float speed = 300.0f;						// 100 units / sec
 	float mouseSpeed = 0.0025f;
 
 	// Based on possibly non-unique name
