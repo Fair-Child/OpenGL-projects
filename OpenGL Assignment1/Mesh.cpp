@@ -31,7 +31,7 @@ Mesh::Mesh(Mesh * copy_this, int a) {
 	centered = copy_this->centered;
 
 	ComputeCentroid();
-	//SetupMesh();
+	//SetupMesh(); will be setup later on first draw attempt
 }
 
 void Mesh::AddVertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 uv) {

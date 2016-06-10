@@ -72,6 +72,7 @@ void Terrain::GenerateDepthMap() {
 
 void Terrain::ModifyTerrain() {
 
+	//TODO: User input for number of "disturbance" lines used
 	for (int i = 0; i < NUM_OF_LINES; i++) {
 		_vec2 start;
 
@@ -157,7 +158,11 @@ void Terrain::ModifyTerrain() {
 
 				if (DepthMap.count(newPoint) > 0){
 					DepthMap.find(newPoint)->second.Position.y += vertexDepth;
-					DepthMap.find(newPoint)->second.Normal = glm::vec3(1, 0, 0);
+				}
+
+				// Don't spawn near spikes
+				if (SpawnMap.count(newPoint) > 0){
+					SpawnMap.find(newPoint)->second = true;
 				}
 			}
 		}
@@ -415,7 +420,6 @@ void Terrain::ExpandTerrainBasedOnCamPos(vec3 position) {
 		newTile.x = xInTiles - 1;
 		newTile.z = zInTiles;
 		ExpandTerrain(newTile);
-		GLRenderer::PENDING_UPDATE++;
 		if (position.z < (tileMinZ + m_TerrainEdges.z)) {
 			// add terrain in (xInTiles - 1, zInTiles - 1)
 			newTile.x = xInTiles - 1;

@@ -187,9 +187,9 @@ void GLRenderer::RenderModel(std::string name, bool transform) {
 
 }
 
-void GLRenderer::ScatterModels() {
+void GLRenderer::ScatterModels(int NUM_OF_MODELS) {
 
-	int NUM_OF_MODELS = 1;//m_Terrain.DepthMap.size() / 100;
+	//int NUM_OF_MODELS = 1;//m_Terrain.DepthMap.size() / 100;
 	int copied_model_index = 0;
 	_vec2 pos;
 
@@ -238,7 +238,7 @@ void GLRenderer::SetData()
 	
 	srand(time(NULL));
 
-	ScatterModels();
+	ScatterModels(40);
 }
 
 
@@ -275,12 +275,14 @@ void GLRenderer::DrawScene()
 
 		for (int j = 0; j < m_Models[i]->meshes.size(); j++) {
 
-			glUniformMatrix4fv(M_MatrixID, 1, GL_FALSE, &m_Models[i]->meshes[j].ModelMat[0][0]);
+			if (m_Models[i]->meshes[j].ready) {
+				glUniformMatrix4fv(M_MatrixID, 1, GL_FALSE, &m_Models[i]->meshes[j].ModelMat[0][0]);
 
-			glUniformMatrix4fv(V_MatrixID, 1, GL_FALSE, &View[0][0]);
+				glUniformMatrix4fv(V_MatrixID, 1, GL_FALSE, &View[0][0]);
 
-			MVP = Projection * View * m_Models[i]->meshes[j].ModelMat;
-			glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+				MVP = Projection * View * m_Models[i]->meshes[j].ModelMat;
+				glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+			}
 			m_Models[i]->meshes[j].Draw(win);
 		}
 
@@ -337,7 +339,12 @@ void GLRenderer::GroundDetection() {
 
 			if (currPosition.y < terrain_pos.y || glm::distance(terrain_pos, currPosition) < 10) {
 
-				position += intersection.Normal * speed / 5.0f;
+				glm::vec3 push_back = intersection.Normal * speed / 5.0f;
+				position += push_back;
+
+				// Translate skybox
+				skybox->Translate(glm::vec3(push_back.x / skybox->scale.x, 0, push_back.z / skybox->scale.z));
+
 				return;
 			}
 		}
@@ -434,6 +441,9 @@ bool GLRenderer::CollisionDetection() {
 						push_back *= speed / 10;
 
 						position += push_back;
+
+						// Translate skybox
+						skybox->Translate(glm::vec3(push_back.x / skybox->scale.x, 0, push_back.z / skybox->scale.z));
 						
 						hit = true;
 					}
@@ -475,33 +485,21 @@ void GLRenderer::HandleModelManipulation() {
 	}
 }
 
-void GLRenderer::MoveSkybox() {
-
-}
 
 // Spawn a random model every 10 seconds when holding W
 // Expand terrain if needed
 void GLRenderer::HandleSpawning() {
 
 
-	if (FINISHED_SPAWNING) {
+	if (FINISHED_SPAWNING && PENDING_UPDATE >= -1) {
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_Terrain.VBO);
 		glBufferData(GL_ARRAY_BUFFER, m_Terrain.vertices.size() * sizeof(Vertex), &m_Terrain.vertices[0], GL_STATIC_DRAW);
 
-		if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS) {
-			//if (PENDING_UPDATE > -1) {
-
-			static double last_time_spawned_ = 10;
-			double currentTime_ = glfwGetTime();
-			
-			int deltaTime_ = int(currentTime_ - last_time_spawned_);
-
-			if (deltaTime_ % 20 == 0) {
-				std::async(&GLRenderer::ScatterModels, this);
-			}
-			//PENDING_UPDATE = -1;
-			//}
+		if (PENDING_UPDATE > -1) {
+			//TODO: User input for number of models spawned
+			std::async(&GLRenderer::ScatterModels, this, 25);
+			PENDING_UPDATE--;
 		}
 	}
 
@@ -563,8 +561,8 @@ void GLRenderer::UpdateMatricesFromInputs(){
 					);
 
 	// TODO: added for debugging purposes, remove this when submit
-	printf("direc: %f, %f, %f \n", direction.x, direction.y, direction.z);
-	printf("pos: %f, %f, %f \n", position.x, position.y, position.z);
+	//printf("direc: %f, %f, %f \n", direction.x, direction.y, direction.z);
+	//printf("pos: %f, %f, %f \n", position.x, position.y, position.z);
 
 	// Right vector
 	right = glm::vec3(
@@ -575,37 +573,25 @@ void GLRenderer::UpdateMatricesFromInputs(){
 
 	// Up vector
 	up = glm::cross(right, direction);
-	glm::vec3 delta;
+	glm::vec3 old_position = position;
 
 	// Movement with Mouse
 	// Move forward
 	if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS){
 		position += direction * deltaTime * speed;
-
-		delta = direction * deltaTime * speed;
-		skybox->Translate(glm::vec3(delta.x / skybox->scale.x, 0, delta.z / skybox->scale.z));
 	}
 	// Move backward
 	if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS){
 		position -= direction * deltaTime * speed;
-
-		delta = direction * deltaTime * speed;
-		skybox->Translate(glm::vec3(-delta.x / skybox->scale.x, 0, -delta.z / skybox->scale.z));
 	}
 
 	// Strafe right
 	if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS){
 		position += right * deltaTime * speed;
-
-		delta = right * deltaTime * speed;
-		skybox->Translate(glm::vec3(delta.x / skybox->scale.x, 0, delta.z / skybox->scale.z));
 	}
 	// Strafe left
 	if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS){
 		position -= right * deltaTime * speed;
-
-		delta = right * deltaTime * speed;
-		skybox->Translate(glm::vec3(-delta.x / skybox->scale.x, 0, -delta.z / skybox->scale.z));
 	}
 	// Strafe up
 	if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS){
@@ -622,6 +608,10 @@ void GLRenderer::UpdateMatricesFromInputs(){
 		glfwSetWindowSize(win, width + width / 100, height + height / 100);
 		Reshape(width + width / 100, height + height / 100);
 	}
+
+	// Translate skybox
+	glm::vec3 delta = position - old_position;
+	skybox->Translate(glm::vec3(delta.x / skybox->scale.x, 0, delta.z / skybox->scale.z));
 
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 11000.0f);

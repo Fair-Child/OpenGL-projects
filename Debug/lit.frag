@@ -47,8 +47,8 @@ void main(){
 	}
 
 	vec3 fogColor = vec3(0.5,0.5,0.5);
-	float fogFactor = 5000 - length(Lights[2].LightPosition_worldspace - Position_worldspace);
-	fogFactor = fogFactor  / (5000 - 200);
+	float fogFactor = 10000 - length(Lights[2].LightPosition_worldspace - Position_worldspace);
+	fogFactor = fogFactor  / (10000 - 200);
 
 	vec3 finalColor = mix(fogColor, color, fogFactor);
 	
