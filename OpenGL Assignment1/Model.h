@@ -21,7 +21,8 @@ protected:
 
 	void Draw(GLFWwindow* win);
 	
-	//void Update(GLFWwindow * win);
+	bool ready = false;
+	void Setup();
 
 	// Functions for transformations of all meshes
 	void Translate(glm::vec3 change);

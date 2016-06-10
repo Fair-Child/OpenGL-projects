@@ -2,6 +2,9 @@
 
 GLRenderer::GLRenderer(GLFWwindow * _win){ win = _win; }
 
+bool GLRenderer::FINISHED_SPAWNING = true;
+int GLRenderer::PENDING_UPDATE = -1;
+
 // Loads the shaders and programs, initializes opengl params
 // Mesh and Terrain Setup themselves
 void GLRenderer::PrepareScene()
@@ -162,6 +165,7 @@ void GLRenderer::LoadBankModels() {
 
 			// Hacky, does not support rotations
 			m_ModelsBank.back()->scale = glm::vec3(model_data[i].transformation[0].x, model_data[i].transformation[1].y, model_data[i].transformation[2].z);
+			//m_ModelsBank.back()->scale *= 0.5f;
 
 		}
 
@@ -185,11 +189,9 @@ void GLRenderer::RenderModel(std::string name, bool transform) {
 
 void GLRenderer::ScatterModels() {
 
-	int NUM_OF_MODELS = m_Terrain.DepthMap.size() / 100;
+	int NUM_OF_MODELS = 1;//m_Terrain.DepthMap.size() / 100;
 	int copied_model_index = 0;
 	_vec2 pos;
-
-	srand(time(NULL));
 
 	for (int i = 0; i < NUM_OF_MODELS; i++) {
 
@@ -228,12 +230,14 @@ void GLRenderer::SetData()
 
 	m_Models.push_back(new Model("./models/skybox/skybox.obj", "sky"));
 	skybox = m_Models.back();	
-	skybox->Scale(glm::vec3(600, 150, 600)); 	skybox->scale = glm::vec3(600, 150, 600);
+	skybox->Scale(glm::vec3(500, 150, 500)); 	skybox->scale = glm::vec3(500, 150, 500);
 	skybox->Translate(glm::vec3(0, 10, 0));
 
 	m_Models.push_back(new Model("./models/flyertug/FlyerTug(obj).obj", "first_person"));	// First person model
-	m_Models.back()->scale = glm::vec3(0.35, 0.35, 0.35);
+	m_Models.back()->scale = glm::vec3(0.5, 0.5, 0.5);
 	
+	srand(time(NULL));
+
 	ScatterModels();
 }
 
@@ -262,7 +266,8 @@ void GLRenderer::DrawScene()
 	m_Terrain.Draw(win);
 
 	// Draw Models
-	for (int i = 0; i < m_Models.size(); i++) {
+	int models_count = m_Models.size();
+	for (int i = 0; i < models_count; i++) {
 
 		if (m_Models[i]->name == "sky") {
 			glDisable(GL_CULL_FACE);
@@ -294,28 +299,50 @@ void GLRenderer::DrawScene()
 // Basic bounding-box detection
 void GLRenderer::GroundDetection() {
 	glm::vec3 currPosition = position + 25.0f * direction;
-	currPosition = currPosition + 20.0f * - up;
+	currPosition = currPosition + 20.0f * -up;
+
+	std::vector<_vec2> near_intersections;
 
 	_vec2 pos;
-
 	pos.x = std::floor(currPosition.x / m_Terrain.X_SCALAR) * m_Terrain.X_SCALAR;
 	pos.z = std::floor(currPosition.z / m_Terrain.Z_SCALAR) * m_Terrain.Z_SCALAR;
+	near_intersections.push_back(pos);
+
+	pos.x += m_Terrain.X_SCALAR;
+	near_intersections.push_back(pos);
+
+	pos.z += m_Terrain.Z_SCALAR;
+	near_intersections.push_back(pos);
+
+	pos.x -= m_Terrain.X_SCALAR;
+	near_intersections.push_back(pos);
+
+	pos.x -= m_Terrain.X_SCALAR;
+	near_intersections.push_back(pos);
+
+	pos.z -= m_Terrain.Z_SCALAR;
+	near_intersections.push_back(pos);
+
 
 	Vertex intersection;
-	float terrain_depth = 0;
+	glm::vec3 terrain_pos;
 
-	if (m_Terrain.DepthMap.count(pos) >= 1) {
+	for (int i = 0; i < near_intersections.size(); i++) {
+		pos = near_intersections[i];
 
-		intersection = m_Terrain.DepthMap.find(pos)->second;
-		terrain_depth = intersection.Position.y;
+		if (m_Terrain.DepthMap.count(pos) > 0) {
 
-		if (currPosition.y < terrain_depth || glm::distance(terrain_depth, currPosition.y) < 10) {
+			intersection = m_Terrain.DepthMap.find(pos)->second;
+			terrain_pos = intersection.Position;
 
-			position += intersection.Normal * speed / 5.0f;
-			return;
+			if (currPosition.y < terrain_pos.y || glm::distance(terrain_pos, currPosition) < 10) {
+
+				position += intersection.Normal * speed / 5.0f;
+				return;
+			}
 		}
-	}
 
+	}
 	return;
 }
 
@@ -377,7 +404,7 @@ void GLRenderer::RayTracing() {
 
 // Very basic box-based
 bool GLRenderer::CollisionDetection() {
-	glm::vec3 currPosition = position + 50.0f * direction;
+	glm::vec3 currPosition = position + 75.0f * direction;
 	bool hit = false;
 
 	for (int j = 0; j < m_Models.size(); j++) {
@@ -448,8 +475,37 @@ void GLRenderer::HandleModelManipulation() {
 	}
 }
 
-// TODO: make it procedural, based on current position and based on file/algorithm
+void GLRenderer::MoveSkybox() {
+
+}
+
+// Spawn a random model every 10 seconds when holding W
+// Expand terrain if needed
 void GLRenderer::HandleSpawning() {
+
+
+	if (FINISHED_SPAWNING) {
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_Terrain.VBO);
+		glBufferData(GL_ARRAY_BUFFER, m_Terrain.vertices.size() * sizeof(Vertex), &m_Terrain.vertices[0], GL_STATIC_DRAW);
+
+		if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS) {
+			//if (PENDING_UPDATE > -1) {
+
+			static double last_time_spawned_ = 10;
+			double currentTime_ = glfwGetTime();
+			
+			int deltaTime_ = int(currentTime_ - last_time_spawned_);
+
+			if (deltaTime_ % 20 == 0) {
+				std::async(&GLRenderer::ScatterModels, this);
+			}
+			//PENDING_UPDATE = -1;
+			//}
+		}
+	}
+
+	std::async(&Terrain::ExpandTerrainBasedOnCamPos, &m_Terrain, position);	// In Parallel
 
 	if (glfwGetKey(win, GLFW_KEY_P) == GLFW_PRESS) {
 		// Static -> Called only first time
@@ -467,7 +523,6 @@ void GLRenderer::HandleSpawning() {
 }
 
 
-// TODO: move to somewhere around me, based on some algorithm -> note: avoid stacking
 void GLRenderer::CopyModelAtMyLocation(Model* copy_this) {
 	m_Models.push_back(new Model(copy_this));
 
@@ -520,32 +575,42 @@ void GLRenderer::UpdateMatricesFromInputs(){
 
 	// Up vector
 	up = glm::cross(right, direction);
-
+	glm::vec3 delta;
 
 	// Movement with Mouse
 	// Move forward
 	if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS){
 		position += direction * deltaTime * speed;
+
+		delta = direction * deltaTime * speed;
+		skybox->Translate(glm::vec3(delta.x / skybox->scale.x, 0, delta.z / skybox->scale.z));
 	}
 	// Move backward
 	if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS){
 		position -= direction * deltaTime * speed;
+
+		delta = direction * deltaTime * speed;
+		skybox->Translate(glm::vec3(-delta.x / skybox->scale.x, 0, -delta.z / skybox->scale.z));
 	}
 
 	// Strafe right
 	if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS){
 		position += right * deltaTime * speed;
+
+		delta = right * deltaTime * speed;
+		skybox->Translate(glm::vec3(delta.x / skybox->scale.x, 0, delta.z / skybox->scale.z));
 	}
 	// Strafe left
 	if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS){
 		position -= right * deltaTime * speed;
+
+		delta = right * deltaTime * speed;
+		skybox->Translate(glm::vec3(-delta.x / skybox->scale.x, 0, -delta.z / skybox->scale.z));
 	}
 	// Strafe up
 	if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS){
 		position += up * deltaTime * speed;
 	}
-
-	m_Terrain.ExpandTerrainBasedOnCamPos(position);
 
 	// Resize window with Page Up / Down
 	if (glfwGetKey(win, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS){
@@ -559,7 +624,7 @@ void GLRenderer::UpdateMatricesFromInputs(){
 	}
 
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 15000.0f);
+	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 11000.0f);
 
 	// Camera matrix
 	View = glm::lookAt(position, position + direction, up);	
@@ -612,7 +677,6 @@ void GLRenderer::UpdateMatricesFromInputs(){
 		glUniform1f(m_Lights[2].LightPower_ID, m_Lights[2].LightPower);
 	}
 
-
 	// For the next frame, the "last time" will be "now"
 	lastTime = currentTime;
 }
@@ -627,7 +691,7 @@ void GLRenderer::DestroyScene()
 	m_pProgram->DetachShader(m_pVertSh);
 	m_pProgram->DetachShader(m_pFragSh);
 
-	Sleep(3000);
+	Sleep(5000);
 
 	for (int i = 0; i < m_Models.size(); i++) {
 		delete m_Models[i];

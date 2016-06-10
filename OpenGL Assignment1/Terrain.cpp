@@ -32,6 +32,7 @@ void Terrain::Draw(GLFWwindow * win) {
 	glEnable(GL_CULL_FACE);
 }
  
+//Source: https://www.opengl.org/discussion_boards/showthread.php/185140-Loading-bitmap-with-SOIL-then-convert-to-int
 void Terrain::GenerateDepthMap() {
 
 	// These points should come from some kind of random source
@@ -46,7 +47,7 @@ void Terrain::GenerateDepthMap() {
 	{
 		for (int j = 0; j <= height; j++)
 		{
-
+			
 			unsigned char r = pixels_[(i + j * width) * 3 + 0];
 			unsigned char g = pixels_[(i + j * width) * 3 + 1];
 			unsigned char b = pixels_[(i + j * width) * 3 + 2];
@@ -156,6 +157,7 @@ void Terrain::ModifyTerrain() {
 
 				if (DepthMap.count(newPoint) > 0){
 					DepthMap.find(newPoint)->second.Position.y += vertexDepth;
+					DepthMap.find(newPoint)->second.Normal = glm::vec3(1, 0, 0);
 				}
 			}
 		}
@@ -330,12 +332,35 @@ void Terrain::LoadVertices() {
 						vertices.push_back(newV3);
 						vertices.push_back(newV2);
 						vertices.push_back(newV4);
-					}
-				}
 
-				float angle = glm::dot(normal, glm::vec3(1, 0, 0));
-				if (angle < 0.10) {
-				SpawnMap.insert(std::pair<_vec2, bool>(pos4, false));
+						_vec2 newpos1;
+						_vec2 newpos2;
+						_vec2 newpos3;
+						_vec2 newpos4;
+
+						newpos1.x = newV1.Position.x;
+						newpos1.z = newV1.Position.z;
+
+						newpos2.x = newV2.Position.x;
+						newpos2.z = newV2.Position.z;
+
+						newpos3.x = newV3.Position.x;
+						newpos3.z = newV3.Position.z;
+
+						newpos4.x = newV4.Position.x;
+						newpos4.z = newV4.Position.z;
+
+						DepthMap.insert(std::pair<_vec2, Vertex>(newpos1, newV1));
+						DepthMap.insert(std::pair<_vec2, Vertex>(newpos2, newV2));
+						DepthMap.insert(std::pair<_vec2, Vertex>(newpos3, newV3));
+						DepthMap.insert(std::pair<_vec2, Vertex>(newpos4, newV4));
+
+						float angle = glm::dot(normal, glm::vec3(1, 0, 0));
+						if (angle < 0.10) {
+							SpawnMap.insert(std::pair<_vec2, bool>(pos4, false));
+						}
+
+					}
 				}
 			}					
 			x++;
@@ -349,16 +374,18 @@ bool Terrain::CheckNothingNearby(_vec2 pos) {
 
 	bool nothing_nearby = true;
 
-	for (int i = 0; i < 50; i++) {
-		for (int j = 0; j < 50; j++) {			
+	for (int i = -5; i < 5; i++) {
+		for (int j = -5; j < 5; j++) {			
 
 			_vec2 test;
-			test.x = pos.x + i;
-			test.z = pos.z + j;
+			test.x = pos.x + i * X_SCALAR;
+			test.z = pos.z + j * Z_SCALAR;
 			
-			if (SpawnMap.count(test) > 0 && SpawnMap.find(test)->second == true) {
-				nothing_nearby = false;
-				break;
+			if (SpawnMap.count(test) > 0) {
+				if (SpawnMap.find(test)->second == true) {
+					nothing_nearby = false;
+					break;
+				}
 			}
 		}
 	}
@@ -367,6 +394,11 @@ bool Terrain::CheckNothingNearby(_vec2 pos) {
 }
 
 void Terrain::ExpandTerrainBasedOnCamPos(vec3 position) {
+
+	if (!GLRenderer::FINISHED_SPAWNING) { return; }
+
+	GLRenderer::FINISHED_SPAWNING = false;
+
 	float terrainLengthInX = MAX_X_POS * X_SCALAR;
 	float terrainLengthInZ = MAX_Z_POS * Z_SCALAR;
 	int xInTiles = glm::floor((position.x - X_TRANSLATE) / terrainLengthInX);
@@ -383,6 +415,7 @@ void Terrain::ExpandTerrainBasedOnCamPos(vec3 position) {
 		newTile.x = xInTiles - 1;
 		newTile.z = zInTiles;
 		ExpandTerrain(newTile);
+		GLRenderer::PENDING_UPDATE++;
 		if (position.z < (tileMinZ + m_TerrainEdges.z)) {
 			// add terrain in (xInTiles - 1, zInTiles - 1)
 			newTile.x = xInTiles - 1;
@@ -429,6 +462,8 @@ void Terrain::ExpandTerrainBasedOnCamPos(vec3 position) {
 		newTile.z = zInTiles + 1;
 		ExpandTerrain(newTile);
 	}
+
+	GLRenderer::FINISHED_SPAWNING = true;
 }
 
 void Terrain::SetupTerrain() {
@@ -527,6 +562,8 @@ void Terrain::ExpandTerrain(_vec2 newTile) {
 			v1 = DepthMap.find(pos1)->second;
 			v1.Position.x += newTile.x * terrainLengthInX;
 			v1.Position.z += newTile.z * terrainLengthInZ;
+			pos1.x += newTile.x * terrainLengthInX;
+			pos1.z += newTile.x * terrainLengthInX;
 			glm::vec3 p1 = v1.Position;
 
 			_vec2 pos2;
@@ -537,6 +574,8 @@ void Terrain::ExpandTerrain(_vec2 newTile) {
 			v2 = DepthMap.find(pos2)->second;
 			v2.Position.x += newTile.x * terrainLengthInX;
 			v2.Position.z += newTile.z * terrainLengthInZ;
+			pos2.x += newTile.x * terrainLengthInX;
+			pos2.z += newTile.z * terrainLengthInZ;
 			glm::vec3 p2 = v2.Position;
 
 			_vec2 pos3;
@@ -547,6 +586,8 @@ void Terrain::ExpandTerrain(_vec2 newTile) {
 			v3 = DepthMap.find(pos3)->second;
 			v3.Position.x += newTile.x * terrainLengthInX;
 			v3.Position.z += newTile.z * terrainLengthInZ;
+			pos3.x += newTile.x * terrainLengthInX;
+			pos3.z += newTile.z * terrainLengthInZ;
 			glm::vec3 p3 = v3.Position;
 
 			_vec2 pos4;
@@ -557,6 +598,8 @@ void Terrain::ExpandTerrain(_vec2 newTile) {
 			v4 = DepthMap.find(pos4)->second;
 			v4.Position.x += newTile.x * terrainLengthInX;
 			v4.Position.z += newTile.z * terrainLengthInZ;
+			pos4.x += newTile.x * terrainLengthInX;
+			pos4.z += newTile.z * terrainLengthInZ;
 			glm::vec3 p4 = v4.Position;
 
 			float yDistP1P2 = glm::abs(p2.y - p1.y);
@@ -568,49 +611,55 @@ void Terrain::ExpandTerrain(_vec2 newTile) {
 			float maxHorizontalYDist = glm::max(yDistP1P3, yDistP4P2);
 			float maxVerticalYDist = glm::max(yDistP1P2, yDistP4P3);
 
-			//if (maxHorizontalYDist <= HEIGHT_SCALAR && maxVerticalYDist <= HEIGHT_SCALAR) {
-				// Normals for v1, v2, v3
-				glm::vec3 u = p1 - p2;
-				glm::vec3 v = p1 - p3;
-				glm::vec3 normal = glm::cross(u, v);
-				normal = glm::normalize(normal);
+			// Normals for v1, v2, v3
+			glm::vec3 u = p1 - p2;
+			glm::vec3 v = p1 - p3;
+			glm::vec3 normal = glm::cross(u, v);
+			normal = glm::normalize(normal);
 
-				v1.Normal = normal;
-				v1.TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
-				vertices.push_back(v1);
+			v1.Normal = normal;
+			v1.TexCoords = glm::vec2(p1.x / MAX_X_POS, p1.z / MAX_Z_POS);
+			vertices.push_back(v1);
 
-				v2.Normal = normal;
-				v2.TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
-				vertices.push_back(v2);
+			v2.Normal = normal;
+			v2.TexCoords = glm::vec2(p2.x / MAX_X_POS, p2.z / MAX_Z_POS);
+			vertices.push_back(v2);
 
-				v3.Normal = normal;
-				v3.TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
-				vertices.push_back(v3);
+			v3.Normal = normal;
+			v3.TexCoords = glm::vec2(p3.x / MAX_X_POS, p3.z / MAX_Z_POS);
+			vertices.push_back(v3);
 
-				// Normals for v3, v2, v4
-				u = p2 - p4;
-				v = p2 - p3;
-				normal = glm::cross(u, v);
-				normal = glm::normalize(normal);
+			// Normals for v3, v2, v4
+			u = p2 - p4;
+			v = p2 - p3;
+			normal = glm::cross(u, v);
+			normal = glm::normalize(normal);
 
-				vertices.push_back(v3);
-				vertices.push_back(v2);
+			vertices.push_back(v3);
+			vertices.push_back(v2);
 
-				v4.Normal = normal;
-				v4.TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
-				vertices.push_back(v4);
+			v4.Normal = normal;
+			v4.TexCoords = glm::vec2(p4.x / MAX_X_POS, p4.z / MAX_Z_POS);
+			vertices.push_back(v4);
 
-				float angle = glm::dot(normal, glm::vec3(1, 0, 0));
-				if (angle < 0.10) {
-					SpawnMap.insert(std::pair<_vec2, bool>(pos4, false));
-				}
-			//}
+			DepthMap.insert(std::pair<_vec2, Vertex>(pos1, v1));
+			DepthMap.insert(std::pair<_vec2, Vertex>(pos2, v2));
+			DepthMap.insert(std::pair<_vec2, Vertex>(pos3, v3));
+			DepthMap.insert(std::pair<_vec2, Vertex>(pos4, v4));
+
+			_vec2 test;
+			test.x = pos3.x;
+			test.z = pos3.z;
+
+			float angle = glm::dot(normal, glm::vec3(1, 0, 0));
+			if (angle < 0.10) {
+				SpawnMap.insert(std::pair<_vec2, bool>(test, false));
+			}
 			x++;
 		}
 
 		z++;
 	}
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+	GLRenderer::PENDING_UPDATE++;
 }

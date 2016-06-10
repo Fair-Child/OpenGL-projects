@@ -16,6 +16,7 @@ protected:
 	int mID;
 	static int unique_ID;
 	Model* parent;
+	bool ready = false;
 
 	std::vector<Vertex> vertices;	
 	std::vector<Texture> textures;
@@ -23,9 +24,6 @@ protected:
 
 	void Draw(GLFWwindow * win);
 
-	// Predefined transformations
-	//void Spin(GLFWwindow * win);		// TODO: generalize, normalize speed
-	//void Revolve(GLFWwindow * win);
 
 	glm::mat4 ModelMat;					// Model matrix
 
@@ -34,6 +32,7 @@ protected:
 	glm::vec4 max;
 	glm::vec4 min;
 	GLfloat radius;
+	void ComputeCentroid();
 
 	GLfloat vertical_angle = 0.0f;
 	GLfloat horizontal_angle = 0.0f;

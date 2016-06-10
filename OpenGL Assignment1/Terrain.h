@@ -14,8 +14,8 @@ class Terrain {
 	friend class GLRenderer;
 protected:
 
-	std::map<_vec2, Vertex> DepthMap;
-	std::map<_vec2, bool> SpawnMap;
+	std::multimap<_vec2, Vertex> DepthMap;
+	std::multimap<_vec2, bool> SpawnMap;
 
 	std::vector<Vertex> vertices;
 	GLuint terrain_texture;
