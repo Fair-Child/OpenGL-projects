@@ -3,7 +3,6 @@
 #define X_TRANSLATE -13000
 #define Z_TRANSLATE -13000
 #define NUM_OF_TEXTURES 3
-#define NUM_OF_LINES 15
 
 
 /* TODO:
@@ -28,12 +27,15 @@ protected:
 
 	void ExpandTerrainBasedOnCamPos(glm::vec3 position);
 
+	void RequestUserInput();
+
 	static int MAX_X_POS;
 	static int MAX_Z_POS;
 
 	static int HEIGHT_SCALAR;
 	static int X_SCALAR;
 	static int Z_SCALAR;
+	int NUM_OF_LINES = 15;
 
 private:
 	void SetupTerrain();

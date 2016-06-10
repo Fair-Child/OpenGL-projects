@@ -187,7 +187,7 @@ void GLRenderer::RenderModel(std::string name, bool transform) {
 
 }
 
-void GLRenderer::ScatterModels(int NUM_OF_MODELS) {
+void GLRenderer::ScatterModels() {
 
 	//int NUM_OF_MODELS = 1;//m_Terrain.DepthMap.size() / 100;
 	int copied_model_index = 0;
@@ -238,7 +238,8 @@ void GLRenderer::SetData()
 	
 	srand(time(NULL));
 
-	ScatterModels(40);
+	RequestUserInput();
+	ScatterModels();
 }
 
 
@@ -498,7 +499,7 @@ void GLRenderer::HandleSpawning() {
 
 		if (PENDING_UPDATE > -1) {
 			//TODO: User input for number of models spawned
-			std::async(&GLRenderer::ScatterModels, this, 25);
+			std::async(&GLRenderer::ScatterModels, this);
 			PENDING_UPDATE--;
 		}
 	}
@@ -902,4 +903,31 @@ void GLRenderer::ReadModelMatrices() {
 
 		model_data.push_back(model_info);
 	}
+}
+
+
+void GLRenderer::RequestUserInput() {
+
+
+	int num = 0;
+	std::string input = "";
+
+	while (num > 100 || num <= 0) {
+		std::cout << "Enter the number of models to spawn randomly: \n";
+		try {
+			std::cin >> input;
+			num = std::stoi(input);
+
+			if (num > 100 || num <= 0) {
+				std::cout << "Number must be between 1 and 100!\n";
+			}
+		}
+		catch (...) {
+			std::cout << "Wrong input!\n";
+			num = 0;
+			input = "";
+		}
+	}
+
+	NUM_OF_MODELS = num;
 }

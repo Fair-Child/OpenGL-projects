@@ -474,6 +474,7 @@ void Terrain::SetupTerrain() {
 
 	srand(time(NULL));
 
+	RequestUserInput();
 	GenerateDepthMap();
 	LoadVertices();
 
@@ -666,4 +667,30 @@ void Terrain::ExpandTerrain(_vec2 newTile) {
 	}
 
 	GLRenderer::PENDING_UPDATE++;
+}
+
+
+void Terrain::RequestUserInput() {
+
+	int num = 0;
+	std::string input = "";
+
+	while (num > 25 || num <= 0) {
+		std::cout << "Enter the number of terrain disturbance lines: \n";
+		try {
+			std::cin >> input;
+			num = std::stoi(input);
+
+			if (num > 25 || num <= 0) {
+				std::cout << "Number must be between 1 and 25!\n";
+			}
+		}
+		catch (...) {
+			std::cout << "Wrong input!\n";
+			num = 0;
+			input = "";
+		}
+	}
+
+	NUM_OF_LINES = num;
 }

@@ -38,12 +38,13 @@ protected:
 	void CopyModelAtMyLocation(Model* copy_this);								// Copy and moves model to camera
 	Model* CopyModel(Model* copy_this);											// Copy constructor... avoids reloading object from files.
 
-
-	void ScatterModels(int count);			// Scatters random model from bank into the world every 10 seconds when holding W and expands terrain if needed
+	int NUM_OF_MODELS = 1;
+	void ScatterModels();			// Scatters random model from bank into the world every 10 seconds when holding W and expands terrain if needed
 	void HandleModelManipulation();			// Scales (mouse button 4,5) / Translates (right/left click) selected model
 	void HandleSpawning();					// Spawns copy of pointed model under camera (P KEY)
 	void OutputModelMatrices();				// Writes all the existing model's Current Transformation Matrix into "Object Matrices.txt" (O KEY)
 	void ReadModelMatrices();				// Read "Object Matrices.txt" and fills the ModelData array, which holds transformation for a model
+	void RequestUserInput();
 
 protected:
 	GLProgram* m_pProgram;					// Program
