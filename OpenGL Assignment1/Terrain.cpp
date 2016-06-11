@@ -675,14 +675,14 @@ void Terrain::RequestUserInput() {
 	int num = 0;
 	std::string input = "";
 
-	while (num > 25 || num <= 0) {
+	while (num > 50 || num <= 0) {
 		std::cout << "Enter the number of terrain disturbance lines: \n";
 		try {
 			std::cin >> input;
 			num = std::stoi(input);
 
-			if (num > 25 || num <= 0) {
-				std::cout << "Number must be between 1 and 25!\n";
+			if (num > 50 || num <= 0) {
+				std::cout << "Number must be between 1 and 50!\n";
 			}
 		}
 		catch (...) {

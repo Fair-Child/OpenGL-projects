@@ -50,6 +50,7 @@
 #include "Terrain.h"
 #include "Mesh.h"
 #include "Model.h"
+#include "BulletParticle.h"
 #include "GLShader.h"
 #include "GLProgram.h"
 #include "GLRenderer.h"
