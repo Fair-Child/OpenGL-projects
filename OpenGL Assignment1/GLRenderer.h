@@ -59,6 +59,7 @@ protected:
 	Terrain m_Terrain;						// Terrain handler
 	std::vector<Model *> m_Models;			// Model container
 	std::vector<LightInfo> m_Lights;		// Light container
+	std::vector<BulletParticle *> m_Bullets;
 	Model * skybox;
 
 	std::vector<Model *> m_ModelsBank;		// Models not rendered, used to copy

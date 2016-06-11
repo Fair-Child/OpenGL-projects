@@ -226,6 +226,7 @@ void GLRenderer::SetData()
 
 	LoadBankModels();
 
+	RequestUserInput();
 	m_Terrain.SetupTerrain(); // Prepare Terrain
 
 	m_Models.push_back(new Model("./models/skybox/skybox.obj", "sky"));
@@ -236,9 +237,7 @@ void GLRenderer::SetData()
 	m_Models.push_back(new Model("./models/flyertug/FlyerTug(obj).obj", "first_person"));	// First person model
 	m_Models.back()->scale = glm::vec3(0.5, 0.5, 0.5);
 	
-	srand(time(NULL));
-
-	RequestUserInput();
+	srand(time(NULL));	
 	ScatterModels();
 }
 
@@ -289,6 +288,28 @@ void GLRenderer::DrawScene()
 
 		if (m_Models[i]->name == "sky") {
 			glEnable(GL_CULL_FACE);
+		}
+	}
+
+	// Draw Bullets
+	std::vector<BulletParticle*>::iterator it;
+	for (it = m_Bullets.begin(); it != m_Bullets.end();) {
+
+		if ((*it)->alive) {
+
+			glUniformMatrix4fv(M_MatrixID, 1, GL_FALSE, &(*it)->sphere->meshes[0].ModelMat[0][0]);
+			glUniformMatrix4fv(V_MatrixID, 1, GL_FALSE, &View[0][0]);
+			MVP = Projection * View * (*it)->sphere->meshes[0].ModelMat;
+			glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+
+			(*it)->Draw(win);
+
+			++it;
+		}
+		else {
+			delete (*it)->sphere;
+			delete * it;
+			it = m_Bullets.erase(it);
 		}
 	}
 
@@ -519,6 +540,13 @@ void GLRenderer::HandleSpawning() {
 		}
 		last_time_spawned = currentTime;
 	}
+
+	if (glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
+		glm::vec3 bullet_pos = position;
+		bullet_pos.y -= 50;
+		m_Bullets.push_back(new BulletParticle(bullet_pos, direction));
+
+	}
 }
 
 
@@ -690,6 +718,11 @@ void GLRenderer::DestroyScene()
 
 	for (int i = 0; i < m_ModelsBank.size(); i++) {
 		delete m_ModelsBank[i];
+	}
+
+	for (int i = 0; i < m_Bullets.size(); i++) {
+		delete m_Bullets[i]->sphere;
+		delete m_Bullets[i];
 	}
 
 	delete m_pProgram;
