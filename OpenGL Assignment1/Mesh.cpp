@@ -20,11 +20,11 @@ Mesh::Mesh(std::vector<Vertex> _vertices, std::vector<GLuint> _indices, std::vec
 	ready = true;
 }
 
-Mesh::Mesh(Mesh * copy_this, int a) {
+Mesh::Mesh(Mesh * copy_this, Model* par) {
 	mID = unique_ID;
 	unique_ID++;
 
-	parent = copy_this->parent;
+	parent = par;
 	vertices = copy_this->vertices;
 	textures = copy_this->textures;
 	indices = copy_this->indices;
@@ -62,6 +62,7 @@ void Mesh::Draw(GLFWwindow * win) {
 	else {
 		SetupMesh();
 		ready = true;
+		parent->ready = true;
 	}
 
 }

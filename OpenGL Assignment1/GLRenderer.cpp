@@ -12,7 +12,7 @@ void GLRenderer::PrepareScene()
 	// Grey background
 	glClearColor(0.170f, 0.170f, 0.200f, 0.0f);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Default wireframe
+	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES); // Default wireframe
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -189,7 +189,6 @@ void GLRenderer::RenderModel(std::string name, bool transform) {
 
 void GLRenderer::ScatterModels() {
 
-	//int NUM_OF_MODELS = 1;//m_Terrain.DepthMap.size() / 100;
 	int copied_model_index = 0;
 	_vec2 pos;
 
@@ -214,8 +213,8 @@ void GLRenderer::ScatterModels() {
 		m_Models.back()->Translate(position);
 		m_Models.back()->Scale(m_Models.back()->scale);
 
+		Sleep(25);
 	}
-
 }
 
 // Fills the ModelData array and loads all the models defined in "Object Matrices.txt"
@@ -272,8 +271,8 @@ void GLRenderer::DrawScene()
 		if (m_Models[i]->name == "sky") {
 			glDisable(GL_CULL_FACE);
 		}
-
-		for (int j = 0; j < m_Models[i]->meshes.size(); j++) {
+		int mesh_count = m_Models[i]->meshes.size();
+		for (int j = 0; j < mesh_count; j++) {
 
 			if (m_Models[i]->meshes[j].ready) {
 				glUniformMatrix4fv(M_MatrixID, 1, GL_FALSE, &m_Models[i]->meshes[j].ModelMat[0][0]);
@@ -383,12 +382,16 @@ void GLRenderer::RayTracing() {
 	glm::vec3 intersection_normal;
 	float dist = 0.0f;
 
-	for (int j = 0; j < m_Models.size(); j++) {
+	int model_count = m_Models.size();
+	for (int j = 0; j < model_count; j++) {
+
 		if (glfwWindowShouldClose(win)) { return; }
 		if (m_Models[j]->name == "first_person") continue;
 		if (m_Models[j]->name == "sky") continue;
+		if (!m_Models[j]->ready) { continue; }
 
-		for (int k = 0; k < m_Models[j]->meshes.size(); k++) {
+		int mesh_count = m_Models[j]->meshes.size();
+		for (int k = 0; k < mesh_count; k++) {
 			Mesh * mesh = &m_Models[j]->meshes[k];
 
 			glm::vec3 mesh_pos(mesh->ModelMat * mesh->centroid);
@@ -434,14 +437,19 @@ void GLRenderer::RayTracing() {
 // Very basic box-based
 bool GLRenderer::CollisionDetection() {
 	glm::vec3 currPosition = position + 75.0f * direction;
+	currPosition = currPosition + 20.0f * -up;
 	bool hit = false;
 
-	for (int j = 0; j < m_Models.size(); j++) {
+	int model_count = m_Models.size();
+	for (int j = 0; j < model_count; j++) {
+
 		if (glfwWindowShouldClose(win)) { return false; }
 		if (m_Models[j]->name == "first_person") continue;
 		if (m_Models[j]->name == "sky") continue;
+		if (!m_Models[j]->ready) { continue; }
 
-		for (int k = 0; k < m_Models[j]->meshes.size(); k++) {
+		int mesh_count = m_Models[j]->meshes.size();
+		for (int k = 0; k < mesh_count; k++) {
 			Mesh * mesh = &m_Models[j]->meshes[k];
 
 			glm::vec3 mesh_pos(mesh->ModelMat * mesh->centroid);
@@ -519,7 +527,6 @@ void GLRenderer::HandleSpawning() {
 		glBufferData(GL_ARRAY_BUFFER, m_Terrain.vertices.size() * sizeof(Vertex), &m_Terrain.vertices[0], GL_STATIC_DRAW);
 
 		if (PENDING_UPDATE > -1) {
-			//TODO: User input for number of models spawned
 			std::async(&GLRenderer::ScatterModels, this);
 			PENDING_UPDATE--;
 		}
@@ -945,14 +952,14 @@ void GLRenderer::RequestUserInput() {
 	int num = 0;
 	std::string input = "";
 
-	while (num > 100 || num <= 0) {
+	while (num > 50 || num <= 0) {
 		std::cout << "Enter the number of models to spawn randomly: \n";
 		try {
 			std::cin >> input;
 			num = std::stoi(input);
 
-			if (num > 100 || num <= 0) {
-				std::cout << "Number must be between 1 and 100!\n";
+			if (num > 50 || num <= 0) {
+				std::cout << "Number must be between 1 and 50!\n";
 			}
 		}
 		catch (...) {

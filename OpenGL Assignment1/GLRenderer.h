@@ -1,8 +1,6 @@
 #include "all_headers.h"
 
-// TODO: Move skybox with camera
 // TODO: Random point lights in world
-
 // TODO: Add enemy AI class with basic hp, add shooting particles / effects?
 // TODO: Add support for resizing with mouse
 // TODO: Add shadows ^.^

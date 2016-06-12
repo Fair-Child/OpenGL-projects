@@ -9,7 +9,7 @@ class Mesh {
 
 public:
 	Mesh(std::vector<Vertex> _vertices, std::vector<GLuint> _indices, std::vector<Texture> _textures, Model* _parent, bool _centered = false);
-	Mesh(Mesh * copy_this, int a);
+	Mesh(Mesh * copy_this, Model* par);
 
 protected:
 
