@@ -650,7 +650,7 @@ void GLRenderer::UpdateMatricesFromInputs(){
 	skybox->Translate(glm::vec3(delta.x / skybox->scale.x, 0, delta.z / skybox->scale.z));
 
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	// Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 11000.0f)
+	Projection = glm::perspective(FoV, 4.0f / 3.0f, 0.1f, 11000.0f);
 
 	// Camera matrix
 	View = glm::lookAt(position, position + direction, up);	
