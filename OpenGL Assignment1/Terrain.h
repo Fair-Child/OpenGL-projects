@@ -44,6 +44,7 @@ private:
 	void LoadVertices();
 	void ExpandTerrain(_vec2 newTile);
 	void SetupTerrainEdges();
+	void AdjustDepthMapEdge();
 
 	GLuint VAO, VBO;
 

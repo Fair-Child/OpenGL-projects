@@ -6,6 +6,7 @@ class Model
 {
 	friend class GLRenderer;
 	friend class BulletParticle;
+	friend class Mesh;
 
 public:
 	Model(GLchar* path, std::string _name = "unspecified", bool _centered = false);

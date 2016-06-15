@@ -31,7 +31,7 @@ Model::Model(Model * copy_this) {
 	path = copy_this->path;
 
 	for (int i = 0; i < copy_this->meshes.size(); i++) {
-		meshes.push_back(Mesh(&copy_this->meshes[i], 1));
+		meshes.push_back(Mesh(&copy_this->meshes[i], this));
 	}
 }
 

@@ -70,6 +70,80 @@ void Terrain::GenerateDepthMap() {
 	ModifyTerrain();
 }
 
+
+void Terrain::AdjustDepthMapEdge() {
+
+	// adjust bottom edge and top edge
+	for (int i = 0; i <= MAX_Z_POS; ++i) {
+		_vec2 bottomPoint;
+		bottomPoint.x = 0 * X_SCALAR + X_TRANSLATE;
+		bottomPoint.z = i * Z_SCALAR + Z_TRANSLATE;
+
+		_vec2 topPoint;
+		topPoint.x = MAX_X_POS * X_SCALAR + X_TRANSLATE;
+		topPoint.z = i * Z_SCALAR + Z_TRANSLATE;
+
+		if (DepthMap.count(bottomPoint) > 0){
+			if (DepthMap.count(topPoint) > 0) {
+				DepthMap.find(topPoint)->second.Position.y = DepthMap.find(bottomPoint)->second.Position.y;
+			}
+		}
+	}
+
+	// left and right edge
+	for (int i = 1; i < MAX_X_POS; ++i) {
+		_vec2 leftPoint;
+		leftPoint.x = i * X_SCALAR + X_TRANSLATE;
+		leftPoint.z = 0 * Z_SCALAR + Z_TRANSLATE;
+
+		_vec2 rightPoint;
+		rightPoint.x = i * X_SCALAR + X_TRANSLATE;
+		rightPoint.z = MAX_Z_POS * Z_SCALAR + Z_TRANSLATE;
+
+		if (DepthMap.count(leftPoint) > 0){
+			if (DepthMap.count(rightPoint) > 0) {
+				DepthMap.find(rightPoint)->second.Position.y = DepthMap.find(leftPoint)->second.Position.y;
+			}
+		}
+	}
+
+	// adjust 4 corners of the map
+	_vec2 bottomLeftCorner;
+	bottomLeftCorner.x = 0 * X_SCALAR + X_TRANSLATE;
+	bottomLeftCorner.z = 0 * Z_SCALAR + Z_TRANSLATE;
+
+	_vec2 bottomRightCorner;
+	bottomRightCorner.x = 0 * X_SCALAR + X_TRANSLATE;
+	bottomRightCorner.z = MAX_Z_POS * Z_SCALAR + Z_TRANSLATE;
+
+	_vec2 topLeftCorner;
+	topLeftCorner.x = MAX_X_POS  * X_SCALAR + X_TRANSLATE;
+	topLeftCorner.z = 0 * Z_SCALAR + Z_TRANSLATE;
+
+
+	_vec2 topRightCorner;
+	topRightCorner.x = MAX_X_POS * X_SCALAR + X_TRANSLATE;
+	topRightCorner.z = MAX_Z_POS * Z_SCALAR + Z_TRANSLATE;
+
+	float newHeight = 0.0f;
+
+	if (DepthMap.count(bottomLeftCorner) > 0) {
+		newHeight = DepthMap.find(bottomLeftCorner)->second.Position.y;
+	}
+
+	if (DepthMap.count(bottomRightCorner) > 0) {
+		DepthMap.find(bottomRightCorner)->second.Position.y = newHeight;
+	}
+
+	if (DepthMap.count(topLeftCorner) > 0) {
+		DepthMap.find(topLeftCorner)->second.Position.y = newHeight;
+	}
+
+	if (DepthMap.count(topRightCorner) > 0) {
+		DepthMap.find(topRightCorner)->second.Position.y = newHeight;
+	}
+}
+
 void Terrain::ModifyTerrain() {
 
 	//TODO: User input for number of "disturbance" lines used
@@ -167,6 +241,8 @@ void Terrain::ModifyTerrain() {
 			}
 		}
 	}
+
+	AdjustDepthMapEdge();
 }
 
 void Terrain::LoadVertices() {
@@ -606,15 +682,6 @@ void Terrain::ExpandTerrain(_vec2 newTile) {
 			pos4.x += newTile.x * terrainLengthInX;
 			pos4.z += newTile.z * terrainLengthInZ;
 			glm::vec3 p4 = v4.Position;
-
-			float yDistP1P2 = glm::abs(p2.y - p1.y);
-			float yDistP4P2 = glm::abs(p2.y - p4.y);
-
-			float yDistP1P3 = glm::abs(p3.y - p1.y);
-			float yDistP4P3 = glm::abs(p3.y - p4.y);
-
-			float maxHorizontalYDist = glm::max(yDistP1P3, yDistP4P2);
-			float maxVerticalYDist = glm::max(yDistP1P2, yDistP4P3);
 
 			// Normals for v1, v2, v3
 			glm::vec3 u = p1 - p2;
