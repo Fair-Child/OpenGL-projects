@@ -504,11 +504,11 @@ void GLRenderer::HandleModelManipulation() {
 			ModelTranslate(-direction * 5.0f, selected);
 		}
 
-		if (glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_5) == GLFW_PRESS){
+		if (glfwGetMouseButton(win, GLFW_KEY_KP_ADD) == GLFW_PRESS){
 			ModelScale(glm::vec3(1.01f, 1.01f, 1.01f), selected);
 		}
 
-		if (glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_4) == GLFW_PRESS){
+		if (glfwGetMouseButton(win, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS){
 			ModelScale(glm::vec3(0.99f, 0.99f, 0.99f), selected);
 		}
 
