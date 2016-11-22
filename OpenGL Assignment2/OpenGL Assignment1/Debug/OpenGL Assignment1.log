@@ -1,0 +1,51 @@
+﻿Build started 11/21/2016 9:29:27 PM.
+     1>Project "C:\Users\Jaw\Documents\Visual Studio 2013\Projects\OpenGL Assignment2\OpenGL Assignment1\OpenGL Assignment1.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt GLProgram.cpp GLRenderer.cpp GLShader.cpp GLWindow.cpp main.cpp Mesh.cpp Model.cpp
+         Model.cpp
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\model.cpp(23): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\model.cpp(39): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\model.cpp(48): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\model.cpp(58): warning C4018: '<' : signed/unsigned mismatch
+         Mesh.cpp
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\mesh.cpp(61): warning C4018: '<' : signed/unsigned mismatch
+         main.cpp
+         GLWindow.cpp
+         GLShader.cpp
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glshader.cpp(82): warning C4244: 'initializing' : conversion from 'std::streamoff' to 'unsigned long', possible loss of data
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glshader.cpp(84): warning C4244: 'initializing' : conversion from 'std::streamoff' to 'unsigned long', possible loss of data
+         GLRenderer.cpp
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glrenderer.cpp(58): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glrenderer.cpp(202): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glrenderer.cpp(278): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glrenderer.cpp(280): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glrenderer.cpp(376): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glrenderer.cpp(456): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\jaw\documents\visual studio 2013\projects\opengl assignment2\opengl assignment1\glrenderer.cpp(563): warning C4018: '<' : signed/unsigned mismatch
+         GLProgram.cpp
+         Generating Code...
+       ResourceCompile:
+         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\rc.exe /D _UNICODE /D UNICODE /l"0x0409" /nologo /fo"Debug\OpenGL Assignment1.res" "OpenGL Assignment1.rc" 
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Jaw\Documents\Visual Studio 2013\Projects\OpenGL Assignment2\Debug\OpenGL Assignment2.exe" /INCREMENTAL /NOLOGO opengl32.lib glfw3.lib glew32s.lib "assimp-vc120-mt.lib" soil.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Jaw\Documents\Visual Studio 2013\Projects\OpenGL Assignment2\Debug\OpenGL Assignment2.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Jaw\Documents\Visual Studio 2013\Projects\OpenGL Assignment2\Debug\OpenGL Assignment2.lib" /MACHINE:X86 "Debug\OpenGL Assignment1.res"
+         Debug\GLProgram.obj
+         Debug\GLRenderer.obj
+         Debug\GLShader.obj
+         Debug\GLWindow.obj
+         Debug\main.obj
+         Debug\Mesh.obj
+         Debug\Model.obj
+         soil.lib(SOIL.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
+     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+     1>GLProgram.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:LBR' specification
+     1>LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+     1>LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+         Generating code
+         Finished generating code
+     1>glew32s.lib(glew.obj) : warning LNK4099: PDB 'vc120.pdb' was not found with 'glew32s.lib(glew.obj)' or at 'C:\Users\Jaw\Documents\Visual Studio 2013\Projects\OpenGL Assignment2\Debug\vc120.pdb'; linking object as if no debug info
+         OpenGL Assignment1.vcxproj -> C:\Users\Jaw\Documents\Visual Studio 2013\Projects\OpenGL Assignment2\Debug\OpenGL Assignment2.exe
+     1>Done Building Project "C:\Users\Jaw\Documents\Visual Studio 2013\Projects\OpenGL Assignment2\OpenGL Assignment1\OpenGL Assignment1.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:15.82
